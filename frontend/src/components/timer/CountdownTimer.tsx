@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { TaskInstance } from '../../lib/types';
 
@@ -38,10 +38,10 @@ export function CountdownTimer({ instance, onComplete, onCancel }: Props) {
     }, 1000);
   };
 
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     onComplete(elapsed);
-  };
+  }, [elapsed, onComplete]);
 
   const handleCancel = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -74,7 +74,7 @@ export function CountdownTimer({ instance, onComplete, onCancel }: Props) {
     if (started && remaining <= 0) {
       handleComplete();
     }
-  }, [remaining, started]);
+  }, [remaining, started, handleComplete]);
 
   return (
     <motion.div

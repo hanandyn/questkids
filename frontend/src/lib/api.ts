@@ -1,6 +1,8 @@
 const API_BASE = '/api/v1';
 
-async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
+type JSONData = Record<string, unknown>;
+
+async function apiFetch<T = JSONData>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -22,15 +24,15 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
 
 export const api = {
   // Auth
-  registerParent: (data: any) => apiFetch('/auth/register-parent', { method: 'POST', body: JSON.stringify(data) }),
-  login: (data: any) => apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
-  createChild: (data: any) => apiFetch('/auth/create-child', { method: 'POST', body: JSON.stringify(data) }),
+  registerParent: (data: JSONData) => apiFetch('/auth/register-parent', { method: 'POST', body: JSON.stringify(data) }),
+  login: (data: JSONData) => apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+  createChild: (data: JSONData) => apiFetch('/auth/create-child', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => apiFetch('/auth/me'),
   getFamily: () => apiFetch('/auth/family'),
   getChildren: () => apiFetch('/auth/children'),
 
   // Tasks
-  createTemplate: (data: any) => apiFetch('/tasks/templates', { method: 'POST', body: JSON.stringify(data) }),
+  createTemplate: (data: JSONData) => apiFetch('/tasks/templates', { method: 'POST', body: JSON.stringify(data) }),
   getTemplates: () => apiFetch('/tasks/templates'),
   deleteTemplate: (id: number) => apiFetch(`/tasks/templates/${id}`, { method: 'DELETE' }),
   getInstances: (childId?: number) => apiFetch(`/tasks/instances${childId ? `?child_id=${childId}` : ''}`),
@@ -46,7 +48,7 @@ export const api = {
   incrementAsk: (id: number) => apiFetch(`/tasks/instances/${id}/increment-ask`, { method: 'POST' }),
 
   // Rewards
-  createReward: (data: any) => apiFetch('/rewards', { method: 'POST', body: JSON.stringify(data) }),
+  createReward: (data: JSONData) => apiFetch('/rewards', { method: 'POST', body: JSON.stringify(data) }),
   getRewards: () => apiFetch('/rewards'),
   deleteReward: (id: number) => apiFetch(`/rewards/${id}`, { method: 'DELETE' }),
   redeemReward: (id: number) => apiFetch(`/rewards/${id}/redeem`, { method: 'POST' }),

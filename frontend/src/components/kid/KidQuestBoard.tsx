@@ -23,14 +23,15 @@ export function KidQuestBoard() {
         api.getRewards(),
         api.getLeaderboard(),
       ]);
-      setInstances(inst);
-      setRewards(rw.filter((r: Reward) => r.is_active));
-      setLeaderboard(lb.leaderboard || []);
+      setInstances(inst as unknown as TaskInstance[]);
+      setRewards((rw as unknown as Reward[]).filter((r: Reward) => r.is_active));
+      setLeaderboard((lb as { leaderboard: LeaderboardEntry[] }).leaderboard || []);
     } catch (e) {
       console.error(e);
     }
   }, [user]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);
 
   const showMessage = (msg: string, type: 'success' | 'info' = 'success') => {
@@ -44,8 +45,8 @@ export function KidQuestBoard() {
       await api.startTimer(instance.id);
       setActiveTimer({ ...instance, status: 'in_progress' });
       loadData();
-    } catch (err: any) {
-      showMessage(err.message, 'info');
+    } catch (err: unknown) {
+      showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
     }
   };
 
@@ -55,8 +56,8 @@ export function KidQuestBoard() {
       setActiveTimer(null);
       showMessage(`🎉 You earned ${result.points_earned} points!`, 'success');
       loadData();
-    } catch (err: any) {
-      showMessage(err.message, 'info');
+    } catch (err: unknown) {
+      showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
     }
   };
 
@@ -65,8 +66,8 @@ export function KidQuestBoard() {
       const result = await api.completeTask(instance.id, 0);
       showMessage(`🎉 +${result.points_earned} points!`, 'success');
       loadData();
-    } catch (err: any) {
-      showMessage(err.message, 'info');
+    } catch (err: unknown) {
+      showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
     }
   };
 
@@ -80,8 +81,8 @@ export function KidQuestBoard() {
       await api.redeemReward(reward.id);
       showMessage(`Redeemed: ${reward.name}! 🎁`, 'success');
       loadData();
-    } catch (err: any) {
-      showMessage(err.message, 'info');
+    } catch (err: unknown) {
+      showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
     }
   };
 

@@ -21,8 +21,9 @@ export function LoginPage() {
       } else {
         await login(username, password);
       }
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
     } finally {
       setBusy(false);
     }

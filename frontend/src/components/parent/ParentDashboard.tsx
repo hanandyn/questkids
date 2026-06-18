@@ -47,14 +47,15 @@ export function ParentDashboard() {
         api.getTemplates(),
         api.getRewards(),
       ]);
-      setChildren(c);
-      setTemplates(t);
-      setRewards(r);
+      setChildren(c as unknown as User[]);
+      setTemplates(t as unknown as TaskTemplate[]);
+      setRewards(r as unknown as Reward[]);
     } catch (e) {
       console.error(e);
     }
   };
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, []);
 
   const handleAddChild = async (e: React.FormEvent) => {
@@ -71,7 +72,7 @@ export function ParentDashboard() {
       setChildName(''); setChildUsername(''); setChildPassword('');
       setMessage('Child added! 🎉');
       loadData();
-    } catch (err: any) { setMessage(err.message); }
+    } catch (err: unknown) { setMessage(err instanceof Error ? err.message : 'Something went wrong'); }
   };
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -92,7 +93,7 @@ export function ParentDashboard() {
       setShowAddTask(false);
       setMessage('Task template created! ✅');
       loadData();
-    } catch (err: any) { setMessage(err.message); }
+    } catch (err: unknown) { setMessage(err instanceof Error ? err.message : 'Something went wrong'); }
   };
 
   const handleAddReward = async (e: React.FormEvent) => {
@@ -109,7 +110,7 @@ export function ParentDashboard() {
       setShowAddReward(false);
       setMessage('Reward added to shop! 🛒');
       loadData();
-    } catch (err: any) { setMessage(err.message); }
+    } catch (err: unknown) { setMessage(err instanceof Error ? err.message : 'Something went wrong'); }
   };
 
   const handleDeleteTemplate = async (id: number) => {

@@ -2,13 +2,18 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../lib/api';
-import type { TaskInstance, Reward, LeaderboardEntry, SpinResult, ChestResult } from '../../lib/types';
+import type { TaskInstance, Reward, SpinResult, ChestResult } from '../../lib/types';
 import { CountdownTimer } from '../timer/CountdownTimer';
 import { Confetti } from './Confetti';
 import { DailySpinWheel } from './DailySpinWheel';
 import { MysteryChest } from './MysteryChest';
 import { AchievementTab, AchievementNotification } from './AchievementTab';
 import { AvatarPicker, AvatarDisplay } from './AvatarPicker';
+import { EnhancedLeaderboard } from './EnhancedLeaderboard';
+import { FamilyGoalKidCard } from './FamilyGoals';
+import { KidWeeklyRecap } from './WeeklyRecap';
+import { CheerNotification } from './CheerSystem';
+import { useCheers } from '../../lib/useCheers';
 import * as sounds from '../../lib/sounds';
 
 type ViewType = 'quests' | 'shop' | 'leaderboard' | 'achievements' | 'profile';
@@ -25,7 +30,6 @@ export function KidQuestBoard() {
   const { user, logout } = useAuth();
   const [instances, setInstances] = useState<TaskInstance[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('quests');
   const [activeTimer, setActiveTimer] = useState<TaskInstance | null>(null);
   const [message, setMessage] = useState('');
@@ -44,16 +48,14 @@ export function KidQuestBoard() {
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const [inst, rw, lb, spinStatus, chestStatus] = await Promise.all([
+      const [inst, rw, spinStatus, chestStatus] = await Promise.all([
         api.getInstances(),
         api.getRewards(),
-        api.getLeaderboard(),
         api.dailySpinStatus().catch(() => ({ available: false })),
         api.mysteryChestStatus().catch(() => ({ chest_available: false, tasks_until_chest: 10 })),
       ]);
       setInstances(inst as unknown as TaskInstance[]);
       setRewards((rw as unknown as Reward[]).filter((r: Reward) => r.is_active));
-      setLeaderboard((lb as { leaderboard: LeaderboardEntry[] }).leaderboard || []);
       setSpinAvailable((spinStatus as { available: boolean }).available);
       setChestAvailable((chestStatus as { chest_available: boolean }).chest_available);
     } catch (e) {
@@ -63,6 +65,9 @@ export function KidQuestBoard() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Cheers
+  const { receivedCheers } = useCheers();
 
   const showMessage = (msg: string, type: 'success' | 'info' = 'success') => {
     setMessage(msg);
@@ -321,6 +326,13 @@ export function KidQuestBoard() {
           )}
         </AnimatePresence>
 
+        {/* Cheer Notifications */}
+        {receivedCheers && receivedCheers.cheers.length > 0 && (
+          <div className="mb-4 space-y-2">
+            <CheerNotification cheers={receivedCheers.cheers} />
+          </div>
+        )}
+
         {/* Message Toast */}
         <AnimatePresence>
           {message && (
@@ -393,6 +405,12 @@ export function KidQuestBoard() {
             onSave={handleAvatarSave}
           />
         )}
+
+        {/* Family Goal Card */}
+        {activeView === 'quests' && <FamilyGoalKidCard />}
+
+        {/* Kid Weekly Recap (collapsed summary) */}
+        {activeView === 'quests' && <KidWeeklyRecap />}
 
         {/* Quests View */}
         {activeView === 'quests' && (
@@ -580,58 +598,7 @@ export function KidQuestBoard() {
         )}
 
         {/* Leaderboard View */}
-        {activeView === 'leaderboard' && (
-          <div>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">🏆 Family Leaderboard</h2>
-            <div className="space-y-3">
-              {leaderboard.map((entry, index) => (
-                <motion.div
-                  key={entry.child_id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`card-quest ${
-                    entry.child_id === user?.id ? 'bg-blue-50 border-blue-300 border-2' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' :
-                       <AvatarDisplay avatarConfig={entry.avatar_config} size={36} />}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">
-                        {entry.display_name}
-                        {entry.child_id === user?.id && ' (You!)'}
-                      </h3>
-                      <div className="flex gap-3 text-sm text-gray-500">
-                        <span>Lv.{entry.level}</span>
-                        <span>🔥 {entry.current_streak}d</span>
-                        <span>{entry.completion_rate}% complete</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-quest-gold">⭐ {entry.stars}</div>
-                      <div className="text-xs text-gray-400">💎 {entry.gems}</div>
-                    </div>
-                  </div>
-                  <div className="mt-2 bg-gray-100 rounded-full h-3 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(entry.completion_rate, 100)}%` }}
-                      className={`h-full rounded-full ${
-                        index === 0 ? 'bg-quest-gold' :
-                        index === 1 ? 'bg-gray-400' :
-                        index === 2 ? 'bg-amber-600' : 'bg-quest-blue'
-                      }`}
-                      transition={{ duration: 1, delay: 0.5 }}
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
+        {activeView === 'leaderboard' && <EnhancedLeaderboard />}
       </div>
     </div>
   );

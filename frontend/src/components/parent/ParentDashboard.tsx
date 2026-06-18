@@ -3,13 +3,16 @@ import { motion } from 'framer-motion';
 import { api } from '../../lib/api';
 import type { User, TaskTemplate, Reward } from '../../lib/types';
 import { useAuth } from '../../contexts/AuthContext';
+import { FamilyGoalsPanel } from '../kid/FamilyGoals';
+import { WeeklyRecap } from '../kid/WeeklyRecap';
+import { InsightsDashboard } from './InsightsDashboard';
 
 export function ParentDashboard() {
   const { user, logout } = useAuth();
   const [children, setChildren] = useState<User[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [activeTab, setActiveTab] = useState<'children' | 'tasks' | 'rewards'>('children');
+  const [activeTab, setActiveTab] = useState<'children' | 'tasks' | 'rewards' | 'goals' | 'recap' | 'insights'>('children');
   const [showAddChild, setShowAddChild] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddReward, setShowAddReward] = useState(false);
@@ -152,7 +155,7 @@ export function ParentDashboard() {
 
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6">
-          {(['children', 'tasks', 'rewards'] as const).map(tab => (
+          {(['children', 'tasks', 'rewards', 'goals', 'recap', 'insights'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -162,7 +165,7 @@ export function ParentDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
-              {tab === 'children' ? '👶 Children' : tab === 'tasks' ? '📋 Tasks' : '🎁 Rewards'}
+              {tab === 'children' ? '👶 Children' : tab === 'tasks' ? '📋 Tasks' : tab === 'rewards' ? '🎁 Rewards' : tab === 'goals' ? '🎯 Goals' : tab === 'recap' ? '📊 Recap' : '💡 Insights'}
             </button>
           ))}
         </div>
@@ -398,6 +401,15 @@ export function ParentDashboard() {
             )}
           </div>
         )}
+
+        {/* Family Goals Tab */}
+        {activeTab === 'goals' && <FamilyGoalsPanel isParent />}
+
+        {/* Weekly Recap Tab */}
+        {activeTab === 'recap' && <WeeklyRecap isParent />}
+
+        {/* Insights Dashboard Tab */}
+        {activeTab === 'insights' && <InsightsDashboard />}
       </div>
     </div>
   );

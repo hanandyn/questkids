@@ -76,4 +76,26 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ avatar_config: avatarConfig }),
   }),
+
+  // Family Goals
+  createFamilyGoal: (data: JSONData) => apiFetch('/family-goals', { method: 'POST', body: JSON.stringify(data) }),
+  getFamilyGoals: () => apiFetch('/family-goals'),
+  getFamilyGoalStatus: () => apiFetch('/family-goals/status'),
+  deleteFamilyGoal: (id: number) => apiFetch(`/family-goals/${id}`, { method: 'DELETE' }),
+
+  // Cheers
+  sendCheer: (data: JSONData) => apiFetch('/cheers', { method: 'POST', body: JSON.stringify(data) }),
+  getReceivedCheers: () => apiFetch('/cheers/received'),
+  getCheersSentToday: () => apiFetch('/cheers/sent-today'),
+
+  // Enhanced Leaderboard
+  getEnhancedLeaderboard: (period = 'all_time') => apiFetch(`/leaderboard/enhanced?period=${period}`),
+
+  // Weekly Recap
+  getWeeklyRecap: (date?: string) => apiFetch(`/recap/weekly${date ? `?recap_date=${date}` : ''}`),
+  getKidRecap: (date?: string) => apiFetch(`/recap/weekly/kid${date ? `?recap_date=${date}` : ''}`),
+
+  // Insights & Tips
+  getInsightsTips: () => apiFetch('/insights/tips'),
+  getInsightsAnalytics: (days = 30) => apiFetch(`/insights/analytics?days=${days}`),
 };

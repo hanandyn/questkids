@@ -2,30 +2,60 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../lib/api';
-import type { TaskInstance, Reward, LeaderboardEntry } from '../../lib/types';
+import type { TaskInstance, Reward, LeaderboardEntry, SpinResult, ChestResult } from '../../lib/types';
 import { CountdownTimer } from '../timer/CountdownTimer';
+import { Confetti } from './Confetti';
+import { DailySpinWheel } from './DailySpinWheel';
+import { MysteryChest } from './MysteryChest';
+import { AchievementTab, AchievementNotification } from './AchievementTab';
+import { AvatarPicker, AvatarDisplay } from './AvatarPicker';
+import * as sounds from '../../lib/sounds';
+
+type ViewType = 'quests' | 'shop' | 'leaderboard' | 'achievements' | 'profile';
+
+interface TaskCompleteExtras {
+  gems_earned?: number;
+  leveled_up?: boolean;
+  new_level?: number;
+  new_achievements?: Array<{ name: string; icon?: string; rarity?: string }>;
+  chest_available?: boolean;
+}
 
 export function KidQuestBoard() {
   const { user, logout } = useAuth();
   const [instances, setInstances] = useState<TaskInstance[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [activeView, setActiveView] = useState<'quests' | 'shop' | 'leaderboard'>('quests');
+  const [activeView, setActiveView] = useState<ViewType>('quests');
   const [activeTimer, setActiveTimer] = useState<TaskInstance | null>(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'info'>('info');
 
+  // Phase 2 state
+  const [spinAvailable, setSpinAvailable] = useState(false);
+  const [showSpin, setShowSpin] = useState(false);
+  const [chestAvailable, setChestAvailable] = useState(false);
+  const [showChest, setShowChest] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [newAchievements, setNewAchievements] = useState<Array<{ name: string; icon?: string; rarity?: string }>>([]);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [muted, setMuted] = useState(false);
+
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const [inst, rw, lb] = await Promise.all([
+      const [inst, rw, lb, spinStatus, chestStatus] = await Promise.all([
         api.getInstances(),
         api.getRewards(),
         api.getLeaderboard(),
+        api.dailySpinStatus().catch(() => ({ available: false })),
+        api.mysteryChestStatus().catch(() => ({ chest_available: false, tasks_until_chest: 10 })),
       ]);
       setInstances(inst as unknown as TaskInstance[]);
       setRewards((rw as unknown as Reward[]).filter((r: Reward) => r.is_active));
       setLeaderboard((lb as { leaderboard: LeaderboardEntry[] }).leaderboard || []);
+      setSpinAvailable((spinStatus as { available: boolean }).available);
+      setChestAvailable((chestStatus as { chest_available: boolean }).chest_available);
     } catch (e) {
       console.error(e);
     }
@@ -40,7 +70,13 @@ export function KidQuestBoard() {
     setTimeout(() => setMessage(''), 4000);
   };
 
+  const handleSoundToggle = () => {
+    const newMuted = sounds.toggleMute();
+    setMuted(newMuted);
+  };
+
   const handleStartTimer = async (instance: TaskInstance) => {
+    sounds.playButtonClick();
     try {
       await api.startTimer(instance.id);
       setActiveTimer({ ...instance, status: 'in_progress' });
@@ -53,8 +89,41 @@ export function KidQuestBoard() {
   const handleCompleteTask = async (instance: TaskInstance, elapsedSeconds: number) => {
     try {
       const result = await api.completeTask(instance.id, elapsedSeconds);
+      const extras = (result as unknown as TaskCompleteExtras);
       setActiveTimer(null);
-      showMessage(`🎉 You earned ${result.points_earned} points!`, 'success');
+
+      // Sound effects
+      sounds.playTaskComplete();
+      setTimeout(() => sounds.playPointsEarned(), 400);
+
+      // Confetti
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3500);
+
+      // Level up
+      let msg = `🎉 You earned ${result.points_earned} points!`;
+      if (extras.gems_earned && extras.gems_earned > 0) {
+        msg += ` +${extras.gems_earned} 💎`;
+      }
+      if (extras.leveled_up) {
+        msg += ` LEVEL UP to ${extras.new_level}! 🚀`;
+        setTimeout(() => sounds.playLevelUp(), 800);
+      }
+      showMessage(msg, 'success');
+
+      // Achievement notification
+      if (extras.new_achievements && extras.new_achievements.length > 0) {
+        setNewAchievements(extras.new_achievements);
+        setTimeout(() => sounds.playAchievement(), 600);
+        setTimeout(() => setNewAchievements([]), 5000);
+      }
+
+      // Check chest
+      if (extras.chest_available) {
+        setChestAvailable(true);
+        setTimeout(() => showMessage('You earned a Mystery Chest! 🎁', 'info'), 2000);
+      }
+
       loadData();
     } catch (err: unknown) {
       showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
@@ -64,7 +133,33 @@ export function KidQuestBoard() {
   const handleCompleteOneShot = async (instance: TaskInstance) => {
     try {
       const result = await api.completeTask(instance.id, 0);
-      showMessage(`🎉 +${result.points_earned} points!`, 'success');
+      const extras = (result as unknown as TaskCompleteExtras);
+
+      sounds.playTaskComplete();
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+
+      let msg = `🎉 +${result.points_earned} points!`;
+      if (extras.gems_earned && extras.gems_earned > 0) {
+        msg += ` +${extras.gems_earned} 💎`;
+      }
+      if (extras.leveled_up) {
+        msg += ` LEVEL UP to ${extras.new_level}! 🚀`;
+        setTimeout(() => sounds.playLevelUp(), 600);
+      }
+      showMessage(msg, 'success');
+
+      if (extras.new_achievements && extras.new_achievements.length > 0) {
+        setNewAchievements(extras.new_achievements);
+        setTimeout(() => sounds.playAchievement(), 500);
+        setTimeout(() => setNewAchievements([]), 5000);
+      }
+
+      if (extras.chest_available) {
+        setChestAvailable(true);
+        setTimeout(() => showMessage('You earned a Mystery Chest! 🎁', 'info'), 2000);
+      }
+
       loadData();
     } catch (err: unknown) {
       showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
@@ -73,12 +168,14 @@ export function KidQuestBoard() {
 
   const handleRedeemReward = async (reward: Reward) => {
     if (!user) return;
+    sounds.playButtonClick();
     if (reward.cost_stars > user.stars) {
       showMessage('Not enough stars! Keep questing! ⭐', 'info');
       return;
     }
     try {
       await api.redeemReward(reward.id);
+      sounds.playPointsEarned();
       showMessage(`Redeemed: ${reward.name}! 🎁`, 'success');
       loadData();
     } catch (err: unknown) {
@@ -86,11 +183,44 @@ export function KidQuestBoard() {
     }
   };
 
+  const handleSpinResult = (result: SpinResult) => {
+    if (result.prize_type !== 'nothing') {
+      setTimeout(() => sounds.playPointsEarned(), 500);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+    }
+    loadData();
+  };
+
+  const handleChestResult = (_result: ChestResult) => {
+    void _result;
+    setChestAvailable(false);
+    loadData();
+  };
+
+  const handleAvatarSave = (_config: string) => {
+    void _config;
+    sounds.playButtonClick();
+    showMessage('Avatar updated!', 'success');
+    loadData();
+  };
+
   const pendingTasks = instances.filter(i => i.status === 'pending');
   const inProgressTasks = instances.filter(i => i.status === 'in_progress');
   const completedTasks = instances.filter(i => i.status === 'completed');
 
   const getRankEmoji = () => {
+    const av = user?.avatar_config;
+    if (av) {
+      try {
+        const config = JSON.parse(av);
+        const arMap: Record<string, string> = {
+          knight: '⚔️', wizard: '🧙', explorer: '🧭', ninja: '🥷',
+          robot: '🤖', artist: '🎨', athlete: '🏃', scientist: '🔬',
+        };
+        if (config.archetype && arMap[config.archetype]) return arMap[config.archetype];
+      } catch { /* ignore */ }
+    }
     const lv = user?.level || 1;
     if (lv <= 5) return '🐣';
     if (lv <= 10) return '🌟';
@@ -102,14 +232,22 @@ export function KidQuestBoard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-quest-bg to-yellow-100">
+      {/* Confetti overlay */}
+      <Confetti active={showConfetti} />
+
       {/* Kid Header */}
       <header className="bg-white/90 backdrop-blur shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold flex items-center gap-2">
+            <h1 className="text-xl font-bold flex items-center gap-2 cursor-pointer"
+              onClick={() => { sounds.playButtonClick(); setActiveView('quests'); }}
+            >
               🏰 QuestKids
             </h1>
-            <div className="flex items-center gap-3 text-sm">
+            <div className="flex items-center gap-2 text-sm">
+              <button onClick={handleSoundToggle} className="text-lg" title={muted ? 'Unmute' : 'Mute'}>
+                {muted ? '🔇' : '🔊'}
+              </button>
               <span className="bg-quest-gold/20 px-3 py-1 rounded-full font-bold">
                 ⭐ {user?.stars || 0}
               </span>
@@ -132,15 +270,56 @@ export function KidQuestBoard() {
           animate={{ opacity: 1, y: 0 }}
           className="card-kid bg-gradient-to-r from-quest-blue to-quest-purple text-white text-center mb-6"
         >
-          <div className="text-6xl mb-2 animate-float">{getRankEmoji()}</div>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <button onClick={() => setShowAvatarPicker(true)} className="transition-transform hover:scale-110">
+              <AvatarDisplay avatarConfig={user?.avatar_config} size={56} />
+            </button>
+            <div className="text-4xl animate-float">{getRankEmoji()}</div>
+          </div>
           <h2 className="text-3xl font-bold">{user?.display_name}</h2>
           <p className="text-white/80">
             Level {user?.level} • {(user?.current_streak ?? 0) > 0 ? `🔥 ${user?.current_streak}-day streak!` : 'Start your streak today!'}
           </p>
-          <div className="mt-3 inline-block bg-white/20 px-4 py-2 rounded-full text-sm">
-            🛡️ Freeze tokens: {user?.freeze_tokens || 0}
+          <div className="mt-3 flex items-center justify-center gap-3">
+            <span className="bg-white/20 px-4 py-2 rounded-full text-sm">
+              🛡️ Freeze tokens: {user?.freeze_tokens || 0}
+            </span>
+            {spinAvailable && (
+              <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                onClick={() => { sounds.playButtonClick(); setShowSpin(true); }}
+                className="bg-quest-gold text-quest-dark px-4 py-2 rounded-full text-sm font-bold animate-pulse-glow"
+              >
+                🎡 Daily Spin!
+              </motion.button>
+            )}
+            {chestAvailable && (
+              <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                onClick={() => { sounds.playButtonClick(); setShowChest(true); }}
+                className="bg-quest-purple/50 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse-glow"
+              >
+                🎁 Open Chest!
+              </motion.button>
+            )}
           </div>
         </motion.div>
+
+        {/* Achievement Notifications */}
+        <AnimatePresence>
+          {newAchievements.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-4"
+            >
+              <AchievementNotification achievements={newAchievements} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Message Toast */}
         <AnimatePresence>
@@ -161,16 +340,17 @@ export function KidQuestBoard() {
         </AnimatePresence>
 
         {/* Bottom Nav */}
-        <div className="flex gap-2 mb-6 justify-center">
+        <div className="flex gap-2 mb-6 justify-center flex-wrap">
           {([
             ['quests', '⚔️ Quests'],
             ['shop', '🛒 Shop'],
-            ['leaderboard', '🏆 Leaderboard'],
-          ] as const).map(([view, label]) => (
+            ['leaderboard', '🏆 Board'],
+            ['achievements', '🏅 Badges'],
+          ] as [ViewType, string][]).map(([view, label]) => (
             <button
               key={view}
-              onClick={() => setActiveView(view)}
-              className={`px-6 py-3 rounded-2xl font-bold text-base md:text-lg transition-all ${
+              onClick={() => { sounds.playButtonClick(); setActiveView(view); }}
+              className={`px-4 py-3 rounded-2xl font-bold text-sm md:text-base transition-all touch-target ${
                 activeView === view
                   ? 'bg-quest-blue text-white shadow-lg scale-105'
                   : 'bg-white text-gray-600 hover:bg-gray-50'
@@ -187,6 +367,30 @@ export function KidQuestBoard() {
             instance={activeTimer}
             onComplete={(elapsed) => handleCompleteTask(activeTimer, elapsed)}
             onCancel={() => setActiveTimer(null)}
+          />
+        )}
+
+        {/* Daily Spin Modal */}
+        {showSpin && (
+          <DailySpinWheel
+            onResult={handleSpinResult}
+            onClose={() => { setShowSpin(false); loadData(); }}
+          />
+        )}
+
+        {/* Mystery Chest Modal */}
+        {showChest && (
+          <MysteryChest
+            onResult={handleChestResult}
+            onClose={() => { setShowChest(false); loadData(); }}
+          />
+        )}
+
+        {/* Avatar Picker Modal */}
+        {showAvatarPicker && (
+          <AvatarPicker
+            onClose={() => setShowAvatarPicker(false)}
+            onSave={handleAvatarSave}
           />
         )}
 
@@ -292,7 +496,7 @@ export function KidQuestBoard() {
                 <h3 className="text-lg font-bold mb-2 flex items-center gap-2 mt-6">
                   ✅ Completed ({completedTasks.length})
                 </h3>
-                {completedTasks.slice(0, 5).map(inst => (
+                {completedTasks.slice(0, 10).map(inst => (
                   <motion.div
                     key={inst.id}
                     initial={{ opacity: 0 }}
@@ -312,6 +516,9 @@ export function KidQuestBoard() {
             )}
           </div>
         )}
+
+        {/* Achievement Badges View */}
+        {activeView === 'achievements' && <AchievementTab />}
 
         {/* Reward Shop View */}
         {activeView === 'shop' && (
@@ -387,9 +594,10 @@ export function KidQuestBoard() {
                     entry.child_id === user?.id ? 'bg-blue-50 border-blue-300 border-2' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="text-3xl">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏅'}
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' :
+                       <AvatarDisplay avatarConfig={entry.avatar_config} size={36} />}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-lg">
@@ -407,7 +615,6 @@ export function KidQuestBoard() {
                       <div className="text-xs text-gray-400">💎 {entry.gems}</div>
                     </div>
                   </div>
-                  {/* Simple bar chart */}
                   <div className="mt-2 bg-gray-100 rounded-full h-3 overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}

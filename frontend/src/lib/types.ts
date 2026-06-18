@@ -99,4 +99,46 @@ export interface LeaderboardEntry {
   completion_rate: number;
   xp_this_week: number;
   age_tier?: number;
+  avatar_config?: string;
+}
+
+export interface Achievement {
+  id: number;
+  name: string;
+  description?: string;
+  icon?: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  unlock_criteria: Record<string, unknown>;
+}
+
+export interface ChildAchievement {
+  id: number;
+  name: string;
+  description?: string;
+  icon?: string;
+  rarity: string;
+  unlock_criteria: Record<string, unknown>;
+  unlocked: boolean;
+  unlocked_at?: string;
+}
+
+export interface SpinResult {
+  prize: string;
+  value: number;
+  prize_type: 'stars' | 'gems' | 'nothing';
+  message: string;
+}
+
+export interface ChestResult {
+  reward_type: string;
+  value: number;
+  item_name?: string;
+  message: string;
+}
+
+export interface AvatarArchetype {
+  id: string;
+  name: string;
+  emoji: string;
+  defaultColor: string;
 }

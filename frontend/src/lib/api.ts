@@ -58,4 +58,22 @@ export const api = {
   // Leaderboard
   getLeaderboard: () => apiFetch('/leaderboard'),
   getChildStreak: (childId: number) => apiFetch(`/leaderboard/child/${childId}/streak`),
+
+  // Achievements
+  getAchievements: () => apiFetch('/achievements'),
+  getChildAchievements: (childId: number) => apiFetch(`/achievements/child/${childId}`),
+
+  // Daily Spin
+  dailySpin: () => apiFetch('/achievements/daily-spin', { method: 'POST' }),
+  dailySpinStatus: () => apiFetch('/achievements/daily-spin/status'),
+
+  // Mystery Chest
+  openMysteryChest: () => apiFetch('/achievements/mystery-chest', { method: 'POST' }),
+  mysteryChestStatus: () => apiFetch('/achievements/mystery-chest/status'),
+
+  // Avatar
+  updateAvatar: (avatarConfig: string) => apiFetch('/achievements/avatar', {
+    method: 'POST',
+    body: JSON.stringify({ avatar_config: avatarConfig }),
+  }),
 };

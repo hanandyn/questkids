@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   backend:
     build: ./backend
@@ -5,10 +7,37 @@ services:
       - "8000:8000"
     volumes:
       - questkids_data:/app/data
+      - ./uploads:/app/uploads
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:///./data/questkids.db
-      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - DATABASE_URL=postgresql+asyncpg://questkids:${DB_PASSWORD:-questkids}@db:5432/questkids
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production-questkids}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost}
+      - DEBUG=${DEBUG:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=questkids
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-questkids}
+      - POSTGRES_DB=questkids
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U questkids"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
@@ -16,6 +45,14 @@ services:
       - "${FRONTEND_PORT:-80}:80"
     depends_on:
       - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
 
 volumes:
   questkids_data:
+  postgres_data:

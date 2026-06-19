@@ -116,4 +116,42 @@ export const api = {
   // Theme Preferences
   getThemePreferences: () => apiFetch('/settings/theme'),
   updateThemePreferences: (data: JSONData) => apiFetch('/settings/theme', { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Phase 5: Organizations
+  createOrganization: (data: JSONData) => apiFetch('/organizations', { method: 'POST', body: JSON.stringify(data) }),
+  joinOrganization: (code: string) => apiFetch('/organizations/join', { method: 'POST', body: JSON.stringify({ code }) }),
+  getMyOrganizations: () => apiFetch('/organizations/my'),
+  getOrganization: (id: number) => apiFetch(`/organizations/${id}`),
+  leaveOrganization: (id: number) => apiFetch(`/organizations/${id}`, { method: 'DELETE' }),
+
+  // Phase 5: Template Marketplace
+  getMarketplace: (filters?: { age_tier?: number; category?: string; task_type?: string; search?: string; sort_by?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.age_tier) params.set('age_tier', String(filters.age_tier));
+    if (filters?.category) params.set('category', filters.category);
+    if (filters?.task_type) params.set('task_type', filters.task_type);
+    if (filters?.search) params.set('search', filters.search);
+    if (filters?.sort_by) params.set('sort_by', filters.sort_by);
+    const qs = params.toString();
+    return apiFetch(`/templates/marketplace${qs ? `?${qs}` : ''}`);
+  },
+  getMarketplaceCategories: () => apiFetch('/templates/marketplace/categories'),
+  forkTemplate: (id: number) => apiFetch(`/templates/${id}/fork`, { method: 'POST' }),
+  rateTemplate: (id: number, rating: number) => apiFetch(`/templates/${id}/rate`, { method: 'POST', body: JSON.stringify({ rating }) }),
+
+  // Phase 5: Integrations
+  createApiKey: (data: JSONData) => apiFetch('/integrations/keys', { method: 'POST', body: JSON.stringify(data) }),
+  getApiKeys: () => apiFetch('/integrations/keys'),
+  revokeApiKey: (id: number) => apiFetch(`/integrations/keys/${id}`, { method: 'DELETE' }),
+
+  // Phase 5: School
+  createHomeworkAssignment: (data: JSONData) => apiFetch('/school/assignments', { method: 'POST', body: JSON.stringify(data) }),
+  getHomeworkAssignments: () => apiFetch('/school/assignments'),
+  completeHomework: (id: number, completed = true) => apiFetch(`/school/assignments/${id}/complete`, { method: 'POST', body: JSON.stringify({ completed }) }),
+
+  // Phase 5: Calendar
+  getCalendarFeedUrl: (childId: number) => `/api/v1/calendar/${childId}/feed.ics`,
+
+  // Phase 5: Seasonal Events
+  getActiveEvents: () => apiFetch('/events/active'),
 };

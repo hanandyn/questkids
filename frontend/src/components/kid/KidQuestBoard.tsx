@@ -15,6 +15,8 @@ import { FamilyGoalKidCard } from './FamilyGoals';
 import { KidWeeklyRecap } from './WeeklyRecap';
 import { CheerNotification } from './CheerSystem';
 import { PowerUpShop } from './PowerUpShop';
+import { SchoolQuests } from './SchoolQuests';
+import { SeasonalBanner } from './SeasonalBanner';
 import { SettingsPanel } from '../settings/SettingsPanel';
 import { useCheers } from '../../lib/useCheers';
 import * as sounds from '../../lib/sounds';
@@ -251,7 +253,7 @@ export function KidQuestBoard() {
             <h1 className="text-xl font-bold flex items-center gap-2 cursor-pointer"
               onClick={() => { sounds.playButtonClick(); setActiveView('quests'); }}
             >
-              🏰 QuestKids
+              🏰 QuestKids <span className="text-xs text-gray-300 ml-1">v0.5.0</span>
             </h1>
             <div className="flex items-center gap-2 text-sm">
               <button onClick={handleSoundToggle} className="text-lg" title={muted ? 'Unmute' : 'Mute'}>
@@ -417,6 +419,12 @@ export function KidQuestBoard() {
 
         {/* Kid Weekly Recap (collapsed summary) */}
         {activeView === 'quests' && <KidWeeklyRecap />}
+
+        {/* Seasonal Events Banner */}
+        {activeView === 'quests' && <SeasonalBanner />}
+
+        {/* School Quests */}
+        {activeView === 'quests' && <SchoolQuests />}
 
         {/* Quests View */}
         {activeView === 'quests' && (

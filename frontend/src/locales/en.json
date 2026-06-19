@@ -330,5 +330,92 @@
     "practice": "Practice",
     "screen_time": "Screen Time",
     "other": "Other"
+  },
+  "organizations": {
+    "title": "Organizations",
+    "create": "Create",
+    "join": "Join",
+    "createNew": "Create Organization",
+    "namePlaceholder": "Organization Name",
+    "typeSchool": "School",
+    "typeClassroom": "Classroom",
+    "typeYouth": "Youth Group",
+    "typeScouts": "Scouts",
+    "createBtn": "Create Organization",
+    "joinTitle": "Join by Code",
+    "codePlaceholder": "Enter join code",
+    "joinBtn": "Join Organization",
+    "none": "No organizations yet. Create one or join with a code!",
+    "code": "Code",
+    "members": "members",
+    "leave": "Leave"
+  },
+  "marketplace": {
+    "title": "Template Marketplace",
+    "search": "Search templates...",
+    "allCategories": "All Categories",
+    "sortRating": "Top Rated",
+    "sortNewest": "Newest",
+    "sortPopular": "Most Popular",
+    "empty": "No templates found. Try different filters!",
+    "addToMy": "Add to My Family"
+  },
+  "integrations": {
+    "title": "Integrations & API",
+    "docs": "API Documentation",
+    "docsDesc": "Full OpenAPI documentation is available at",
+    "authHeader": "Authenticate with header:",
+    "createKey": "Create API Key",
+    "newKeyForm": "New API Key",
+    "keyName": "Key name (e.g., \"Home Assistant\")",
+    "scopes": "Scopes:",
+    "generate": "Generate Key",
+    "newKey": "New API Key Created!",
+    "copyWarning": "Copy this key now. You won't be able to see it again.",
+    "dismiss": "Dismiss",
+    "noKeys": "No API keys yet",
+    "revoke": "Revoke",
+    "confirmRevoke": "Revoke this API key? This cannot be undone.",
+    "revoked": "API key revoked",
+    "copied": "Key copied! Save it now — it won't be shown again.",
+    "lastUsed": "Last used"
+  },
+  "school": {
+    "title": "School Quests",
+    "pending": "Pending",
+    "completed": "Completed",
+    "noAssignments": "No school assignments yet"
+  },
+  "calendar": {
+    "title": "Calendar Integration",
+    "howTo": "How to subscribe",
+    "step1": "Copy the calendar feed URL below",
+    "step2": "Open your calendar app (Google Calendar, Apple Calendar, Outlook)",
+    "step3": "Find \"Add Calendar\" → \"From URL\" or \"Subscribe\"",
+    "step4": "Paste the URL and save",
+    "tip": "The calendar will auto-update with new quests and milestones!",
+    "noChildren": "Add children to enable calendar feeds",
+    "addToGoogle": "Add to Google Calendar"
+  },
+  "teacher": {
+    "title": "Teacher Dashboard",
+    "newAssignment": "New Assignment",
+    "child": "Student",
+    "selectChild": "Select student...",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g., Math Worksheet Ch. 5",
+    "description": "Description",
+    "descPlaceholder": "Optional details...",
+    "subject": "Subject",
+    "subjectPlaceholder": "e.g., Math, English",
+    "points": "Points",
+    "dueDate": "Due Date",
+    "assign": "Assign Homework",
+    "recentAssignments": "Recent Assignments",
+    "noAssignments": "No assignments yet"
+  },
+  "events": {
+    "bonus": "Bonus Points!",
+    "active": "Active Event"
   }
 }

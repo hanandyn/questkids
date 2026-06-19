@@ -47,6 +47,10 @@ export interface TaskTemplate {
   requires_photo: boolean;
   requires_approval: boolean;
   is_active: boolean;
+  // Phase 5: Marketplace
+  public?: boolean;
+  community_rating?: number;
+  community_ratings_count?: number;
 }
 
 export interface TaskInstance {
@@ -351,4 +355,76 @@ export interface ScheduleDay {
   date: string;
   day: string;
   scheduled: boolean;
+}
+
+// Phase 5: Organizations
+export interface Organization {
+  id: number;
+  name: string;
+  type: 'school' | 'classroom' | 'youth_group' | 'scouts';
+  code: string;
+  created_by_id: number;
+  created_at?: string;
+  members?: OrganizationMember[];
+  member_count?: number;
+}
+
+export interface OrganizationMember {
+  id: number;
+  org_id: number;
+  family_id: number;
+  role: 'admin' | 'member';
+  joined_at?: string;
+}
+
+// Phase 5: Integrations
+export interface ApiKeyInfo {
+  id: number;
+  name: string;
+  scopes: string[];
+  created_at?: string;
+  last_used?: string | null;
+  revoked: boolean;
+}
+
+export interface ApiKeyCreated {
+  id: number;
+  name: string;
+  key: string;
+  scopes: string[];
+  created_at?: string;
+}
+
+// Phase 5: Seasonal Events
+export interface SeasonalEvent {
+  id: number;
+  name: string;
+  theme: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  bonus_multiplier: number;
+  special_badge_name?: string;
+  is_active: boolean;
+}
+
+export interface ActiveEvents {
+  events: SeasonalEvent[];
+  has_active: boolean;
+}
+
+// Phase 5: School
+export interface HomeworkAssignment {
+  id: number;
+  org_id: number;
+  teacher_id: number;
+  child_id: number;
+  title: string;
+  description?: string;
+  subject?: string;
+  due_date?: string;
+  points: number;
+  status: 'assigned' | 'completed' | 'overdue';
+  completed_at?: string;
+  created_at?: string;
 }

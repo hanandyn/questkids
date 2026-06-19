@@ -3,7 +3,8 @@ from .user import (
     TokenResponse, FamilyResponse, FamilyCreate,
 )
 from .task import (
-    TaskTemplateCreate, TaskTemplateResponse,
+    TaskTemplateCreate, TaskTemplateResponse, TaskTemplateMarketplaceFilter,
+    TemplateRateRequest,
     TaskInstanceResponse, TimerStartRequest, TimerCompleteRequest, TaskApproveRequest,
 )
 from .reward import (
@@ -21,4 +22,17 @@ from .social import (
     WeeklyRecapResponse, PerChildRecap, FamilyRecapHighlights,
     TipCard, InsightsResponse,
     RankChange, EnhancedLeaderboardEntry, EnhancedLeaderboardResponse,
+)
+from .organization import (
+    OrganizationCreate, OrganizationJoin, OrganizationResponse,
+    OrganizationMemberResponse, OrganizationWithMembers,
+)
+from .apikey import (
+    ApiKeyCreate, ApiKeyResponse, ApiKeyCreatedResponse,
+)
+from .seasonal_event import (
+    SeasonalEventResponse, ActiveEventsResponse,
+)
+from .school import (
+    HomeworkAssignmentCreate, HomeworkAssignmentResponse, HomeworkCompleteRequest,
 )

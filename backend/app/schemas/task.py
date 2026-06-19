@@ -30,6 +30,19 @@ class TaskTemplateCreate(BaseModel):
     requires_photo: bool = False
     requires_approval: bool = False
     assigned_child_ids: Optional[List[int]] = None  # kids assigned to this task
+    public: bool = False  # share to marketplace
+
+
+class TaskTemplateMarketplaceFilter(BaseModel):
+    age_tier: Optional[int] = None
+    category: Optional[str] = None
+    task_type: Optional[str] = None
+    search: Optional[str] = None
+    sort_by: str = "rating"  # rating, newest, popular
+
+
+class TemplateRateRequest(BaseModel):
+    rating: int = 5  # 1-5
 
 
 class TaskTemplateResponse(BaseModel):
@@ -60,6 +73,9 @@ class TaskTemplateResponse(BaseModel):
     requires_photo: bool
     requires_approval: bool
     is_active: bool
+    public: bool = False
+    community_rating: int = 0
+    community_ratings_count: int = 0
     created_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}

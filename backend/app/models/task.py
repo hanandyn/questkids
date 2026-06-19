@@ -44,6 +44,11 @@ class TaskTemplate(Base):
     time_window_end = Column(String, nullable=True)  # "08:00"
     skip_on_holidays = Column(Boolean, default=False)  # school/holiday awareness
     
+    # Template marketplace
+    public = Column(Boolean, default=False)  # shared to marketplace
+    community_rating = Column(Integer, default=0)  # total rating score
+    community_ratings_count = Column(Integer, default=0)  # number of ratings
+    
     # Other settings
     age_tier_min = Column(Integer, default=1)
     age_tier_max = Column(Integer, default=5)

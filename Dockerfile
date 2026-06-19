@@ -30,7 +30,7 @@ COPY nginx-app.conf /etc/nginx/conf.d/default.conf
 COPY supervisord-app.conf /etc/supervisor/conf.d/supervisord.conf
 
 ENV PYTHONPATH=/app
-RUN mkdir -p /app/data /app/uploads
+RUN mkdir -p /app/persistent /app/uploads
 
 EXPOSE 80
 

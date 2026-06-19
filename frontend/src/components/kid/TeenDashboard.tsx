@@ -4,6 +4,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { TaskInstance, KidRecap, AllowanceStatus } from '../../lib/types';
 import { CountdownTimer } from '../timer/CountdownTimer';
+import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
 import * as sounds from '../../lib/sounds';
 
 type ViewType = 'tasks' | 'calendar' | 'stats' | 'allowance' | 'settings';
@@ -68,6 +69,18 @@ export function TeenDashboard() {
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : 'Error');
       setActiveTimer(null);
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const handleUndoTask = async (instance: TaskInstance) => {
+    try {
+      await api.undoTask(instance.id);
+      setMessage('↩️ Undone — points returned');
+      setTimeout(() => setMessage(''), 3000);
+      loadData();
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : 'Error');
       setTimeout(() => setMessage(''), 3000);
     }
   };
@@ -282,7 +295,16 @@ export function TeenDashboard() {
                           {completedTasks.slice(0, 10).map(inst => (
                             <div key={inst.id} className="bg-gray-900/50 border border-gray-800/30 rounded-xl p-3 flex items-center justify-between opacity-60">
                               <span className="line-through text-gray-500">{inst.template?.name}</span>
-                              <span className="text-green-400 text-sm">+{inst.points_earned}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-green-400 text-sm">+{inst.points_earned}</span>
+                                <button
+                                  onClick={() => handleUndoTask(inst)}
+                                  className="text-xs px-2 py-1 bg-orange-900/30 text-orange-400 rounded-lg hover:bg-orange-900/50 transition-colors"
+                                  title="Undo"
+                                >
+                                  ↩️
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -514,6 +536,11 @@ export function TeenDashboard() {
             </div>
           </motion.div>
         )}
+      </div>
+
+      {/* Family Message Board */}
+      <div className="max-w-5xl mx-auto px-4 pb-6">
+        <FamilyMessageBoard />
       </div>
 
       {/* Touch handler for pull-to-refresh */}

@@ -6,6 +6,7 @@ import * as sounds from '../../lib/sounds';
 import type { Tier1Task, PetState } from '../../lib/types';
 import { useVoicePrompt } from './useVoicePrompt';
 import { VoiceSettings } from './VoiceSettings';
+import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
 
 /**
  * Little Explorers Dashboard — for ages 3-5
@@ -512,6 +513,11 @@ export function LittleExplorerDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Family Message Board */}
+      <div className="max-w-2xl mx-auto px-4 pb-6">
+        <FamilyMessageBoard />
+      </div>
     </div>
   );
 }

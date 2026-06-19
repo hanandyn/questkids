@@ -20,6 +20,8 @@ import { SchoolQuests } from './SchoolQuests';
 import { SeasonalBanner } from './SeasonalBanner';
 import { SettingsPanel } from '../settings/SettingsPanel';
 import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
+import heroImg from '../../assets/questkids-hero.jpg';
+import emptyImg from '../../assets/questkids-empty.jpg';
 import { useCheers } from '../../lib/useCheers';
 import * as sounds from '../../lib/sounds';
 
@@ -179,6 +181,17 @@ export function KidQuestBoard() {
     }
   };
 
+  const handleUndoTask = async (instance: TaskInstance) => {
+    try {
+      await api.undoTask(instance.id);
+      setMessage('↩️ Task undone — points returned!');
+      setTimeout(() => setMessage(''), 3000);
+      loadData();
+    } catch (err: unknown) {
+      showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
+    }
+  };
+
   const handleRedeemReward = async (reward: Reward) => {
     if (!user) return;
     sounds.playButtonClick();
@@ -282,8 +295,9 @@ export function KidQuestBoard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card-kid bg-gradient-to-r from-quest-blue to-quest-purple text-white text-center mb-6"
+          className="card-kid bg-gradient-to-r from-quest-blue to-quest-purple text-white text-center mb-6 relative overflow-hidden"
         >
+          <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
           <div className="flex items-center justify-center gap-3 mb-2">
             <button onClick={() => setShowAvatarPicker(true)} className="transition-transform hover:scale-110">
               <AvatarDisplay avatarConfig={user?.avatar_config} size={56} />
@@ -470,7 +484,7 @@ export function KidQuestBoard() {
                 animate={{ opacity: 1 }}
                 className="text-center py-12"
               >
-                <div className="text-7xl mb-4 animate-float">🌟</div>
+                <img src={emptyImg} alt="No quests" className="w-32 h-32 mx-auto mb-4 object-contain animate-float" />
                 <p className="text-xl text-gray-500">No quests for today!</p>
                 <p className="text-gray-400">Enjoy your free time, adventurer!</p>
               </motion.div>
@@ -543,7 +557,16 @@ export function KidQuestBoard() {
                         <h4 className="font-bold line-through text-gray-500">{inst.template?.name}</h4>
                         <span className="text-sm text-green-600">+{inst.points_earned} points</span>
                       </div>
-                      <span className="text-2xl">✅</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleUndoTask(inst)}
+                          className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors focus-ring"
+                          title="Oops! Undo"
+                        >
+                          ↩️ Undo
+                        </button>
+                        <span className="text-2xl">✅</span>
+                      </div>
                     </div>
                   </motion.div>
                 ))}

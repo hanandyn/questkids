@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { LanguageSwitcher } from '../shared/LanguageSwitcher';
+import loginBg from '../../assets/questkids-login-bg.jpg';
 
 type LoginMode = 'choose' | 'kid' | 'parent';
 
@@ -65,7 +66,7 @@ export function LoginPage() {
   // ── Mode chooser ──────────────────────────────────────────────
   if (mode === 'choose') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-quest-blue via-quest-purple to-quest-pink p-4" dir={document.documentElement.dir}>
+      <div className="min-h-screen flex items-center justify-center p-4" dir={document.documentElement.dir} style={{backgroundImage: `linear-gradient(rgba(99,102,241,0.65), rgba(168,85,247,0.65)), url(${loginBg})`, backgroundSize: "cover", backgroundPosition: "center"}}>
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -105,7 +106,7 @@ export function LoginPage() {
   // ── Kid login ──────────────────────────────────────────────────
   if (mode === 'kid') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-quest-pink via-quest-purple to-quest-blue p-4" dir={document.documentElement.dir}>
+      <div className="min-h-screen flex items-center justify-center p-4" dir={document.documentElement.dir} style={{backgroundImage: `linear-gradient(rgba(236,72,153,0.6), rgba(147,51,234,0.6)), url(${loginBg})`, backgroundSize: "cover", backgroundPosition: "center"}}>
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -216,7 +217,7 @@ export function LoginPage() {
 
   // ── Parent login ───────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-quest-blue via-quest-purple to-quest-pink p-4" dir={document.documentElement.dir}>
+    <div className="min-h-screen flex items-center justify-center p-4" dir={document.documentElement.dir} style={{backgroundImage: `linear-gradient(rgba(59,130,246,0.6), rgba(139,92,246,0.6)), url(${loginBg})`, backgroundSize: "cover", backgroundPosition: "center"}}>
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

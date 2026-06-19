@@ -49,6 +49,9 @@ export const api = {
   }),
   incrementAsk: (id: number) => apiFetch(`/tasks/instances/${id}/increment-ask`, { method: 'POST' }),
 
+  // Kid undo
+  undoTask: (instanceId: number) => apiFetch(`/tasks/instances/${instanceId}/undo`, { method: 'POST' }),
+
   // Parent task management
   updateTaskStatus: (instanceId: number, status: string, notes?: string) => apiFetch(`/tasks/instances/${instanceId}/status`, {
     method: 'PUT',

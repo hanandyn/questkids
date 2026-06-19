@@ -293,6 +293,51 @@ async def complete_task(
     return resp
 
 
+@router.post("/instances/{instance_id}/undo", response_model=TaskInstanceResponse)
+async def undo_task_completion(
+    instance_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Kid undoes a completed task (e.g. accidentally marked done).
+
+    Reverts status to pending and deducts the points that were awarded.
+    Only the kid who owns the task can undo it.
+    """
+    result = await db.execute(
+        select(TaskInstance)
+        .options(selectinload(TaskInstance.template))
+        .where(TaskInstance.id == instance_id)
+    )
+    instance = result.scalar_one_or_none()
+    if not instance:
+        raise HTTPException(status_code=404, detail="Task instance not found")
+    if current_user.role == "child" and instance.child_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your task")
+    if instance.status != "completed":
+        raise HTTPException(status_code=400, detail="Can only undo completed tasks")
+
+    # Deduct points back from the child
+    child_result = await db.execute(select(User).where(User.id == instance.child_id))
+    child = child_result.scalar_one_or_none()
+    if child and instance.points_earned:
+        child.stars = max(0, (child.stars or 0) - instance.points_earned)
+        child.xp = max(0, (child.xp or 0) - instance.points_earned)
+        child.total_tasks_completed = max(0, (child.total_tasks_completed or 0) - 1)
+        child.completed_since_last_chest = max(0, (child.completed_since_last_chest or 0) - 1)
+
+    instance.status = "pending"
+    instance.points_earned = 0
+    instance.bonus_points = 0
+    instance.penalty_points = 0
+    instance.timer_ended_at = None
+    instance.parent_approved_at = None
+
+    await db.commit()
+    await db.refresh(instance)
+    return TaskInstanceResponse.model_validate(instance)
+
+
 @router.post("/instances/{instance_id}/approve", response_model=TaskInstanceResponse)
 async def approve_task(
     instance_id: int,

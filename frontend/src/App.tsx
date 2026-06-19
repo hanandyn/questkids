@@ -10,6 +10,7 @@ import { KidQuestBoard } from './components/kid/KidQuestBoard';
 import { TeenDashboard } from './components/kid/TeenDashboard';
 import { LittleExplorerDashboard } from './components/kid/LittleExplorerDashboard';
 import { ShabbatBanner } from './components/kid/ShabbatBanner';
+import { RitualBanner } from './components/shared/RitualBanner';
 import { setLanguageDirection, SUPPORTED_LANGUAGES } from './lib/i18n';
 import { api } from './lib/api';
 import { useTranslation } from 'react-i18next';
@@ -90,6 +91,7 @@ function AppContent() {
     return (
       <>
         <ShabbatBanner />
+        <RitualBanner />
         <LittleExplorerDashboard />
       </>
     );
@@ -100,6 +102,7 @@ function AppContent() {
     return (
       <>
         <ShabbatBanner />
+        <RitualBanner />
         <TeenDashboard />
       </>
     );
@@ -109,6 +112,7 @@ function AppContent() {
     return (
       <>
         <ShabbatBanner />
+        <RitualBanner />
         <ParentDashboard />
       </>
     );
@@ -117,6 +121,7 @@ function AppContent() {
   return (
     <>
       <ShabbatBanner />
+      <RitualBanner />
       <KidQuestBoard />
     </>
   );

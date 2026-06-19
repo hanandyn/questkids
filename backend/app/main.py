@@ -2,10 +2,12 @@
 
 import os
 import time
+import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -13,9 +15,11 @@ from slowapi.errors import RateLimitExceeded
 from .core.config import settings
 from .core.database import create_tables, async_session, engine
 from .models import User, Family, TaskTemplate, TaskInstance, Reward, RewardRedemption, StreakHistory, Achievement, ChildAchievement, FamilyGoal, FamilyGoalProgress, Cheer, PowerUp, PowerUpPurchase, Organization, OrganizationMember, ApiKey, SeasonalEvent, HomeworkAssignment, Notification, AvatarItem, ChildAvatarItem  # noqa: F401
+from .models import SoundSettings, DailyRitual, FamilyMessage, TaskSuggestion  # noqa: F401
 from .api import auth, tasks, rewards, leaderboard, achievements, family_goals, cheers, recap, powerups, settings as settings_api
 from .api import organizations, templates_marketplace, integrations, external, school, calendar, events, notifications, admin_metrics
 from .api import tier1, avatars, allowance
+from .api import sound, rituals, family_messages, suggestions, analytics
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
@@ -42,13 +46,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version="0.7.0",
+    version="0.8.0",
     lifespan=lifespan,
 )
 
 # Rate limiting
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+# Request ID middleware — adds X-Request-ID to all responses for tracing
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+
+app.add_middleware(RequestIDMiddleware)
+
 
 # Security headers middleware
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -63,6 +79,41 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+# CSRF protection for auth endpoints
+CSRF_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+
+class CSRFTokenMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Skip CSRF for safe methods
+        if request.method in CSRF_SAFE_METHODS:
+            return await call_next(request)
+
+        # For state-changing requests on auth endpoints, validate origin/referrer
+        if "/auth/" in request.url.path and request.method not in CSRF_SAFE_METHODS:
+            origin = request.headers.get("origin", "")
+            referer = request.headers.get("referer", "")
+            allowed = any(
+                o in origin or o in referer
+                for o in settings.CORS_ORIGINS
+            )
+            # In development mode, allow requests without origin (API clients)
+            if not origin and not referer:
+                # Allow API client calls (fetch/curl without Origin header)
+                pass
+            elif not allowed and origin:
+                return Response(
+                    content='{"detail":"Invalid origin"}',
+                    status_code=403,
+                    media_type="application/json",
+                )
+
+        return await call_next(request)
+
+app.add_middleware(CSRFTokenMiddleware)
+
 
 # CORS
 app.add_middleware(
@@ -103,6 +154,13 @@ app.include_router(tier1.router, prefix="/api/v1")
 app.include_router(avatars.router, prefix="/api/v1")
 app.include_router(allowance.router, prefix="/api/v1")
 
+# Phase 8 routes
+app.include_router(sound.router, prefix="/api/v1")
+app.include_router(rituals.router, prefix="/api/v1")
+app.include_router(family_messages.router, prefix="/api/v1")
+app.include_router(suggestions.router, prefix="/api/v1")
+app.include_router(analytics.router, prefix="/api/v1")
+
 
 @app.get("/api/v1/health")
 async def health_check():
@@ -117,7 +175,7 @@ async def health_check():
 
     return {
         "status": "ok" if db_ok else "degraded",
-        "version": "0.7.0",
+        "version": "0.8.0",
         "database": "connected" if db_ok else "disconnected",
     }
 
@@ -150,7 +208,7 @@ async def health_detailed():
 
     return {
         "status": "ok" if db_ok else "degraded",
-        "version": "0.7.0",
+        "version": "0.8.0",
         "database": {
             "connected": db_ok,
             "latency_ms": db_latency_ms,

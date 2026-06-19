@@ -1,5 +1,6 @@
 """Reward shop API routes."""
 
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -158,7 +159,7 @@ async def approve_redemption(
     current_user: User = Depends(get_current_parent),
     db: AsyncSession = Depends(get_db),
 ):
-    """Parent approves or fulfills a redemption."""
+    """Parent approves a redemption."""
     result = await db.execute(select(RewardRedemption).where(RewardRedemption.id == redemption_id))
     redemption = result.scalar_one_or_none()
     if not redemption:
@@ -166,9 +167,89 @@ async def approve_redemption(
     if redemption.reward.family_id != current_user.family_id:
         raise HTTPException(status_code=403, detail="Not in your family")
 
-    from datetime import datetime, timezone
-    redemption.status = "fulfilled"
-    redemption.fulfilled_at = datetime.now(timezone.utc)
+    redemption.status = "approved"
     await db.commit()
     await db.refresh(redemption)
     return RedemptionResponse.model_validate(redemption)
+
+
+class FulfillRequest(BaseModel):
+    notes: str | None = None
+
+
+@router.post("/redemptions/{redemption_id}/fulfill", response_model=RedemptionResponse)
+async def fulfill_redemption(
+    redemption_id: int,
+    data: FulfillRequest = FulfillRequest(),
+    current_user: User = Depends(get_current_parent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Parent marks a reward as delivered to the child."""
+    result = await db.execute(select(RewardRedemption).where(RewardRedemption.id == redemption_id))
+    redemption = result.scalar_one_or_none()
+    if not redemption:
+        raise HTTPException(status_code=404, detail="Redemption not found")
+    if redemption.reward.family_id != current_user.family_id:
+        raise HTTPException(status_code=403, detail="Not in your family")
+    if redemption.status == "fulfilled":
+        raise HTTPException(status_code=400, detail="Already fulfilled")
+
+    from datetime import datetime, timezone
+    redemption.status = "fulfilled"
+    redemption.fulfilled_at = datetime.now(timezone.utc)
+    if data.notes:
+        redemption.notes = data.notes
+    await db.commit()
+    await db.refresh(redemption)
+    return RedemptionResponse.model_validate(redemption)
+
+
+@router.post("/redemptions/{redemption_id}/cancel", response_model=RedemptionResponse)
+async def cancel_redemption(
+    redemption_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Child cancels an unfulfilled redemption to get stars back."""
+    result = await db.execute(select(RewardRedemption).where(RewardRedemption.id == redemption_id))
+    redemption = result.scalar_one_or_none()
+    if not redemption:
+        raise HTTPException(status_code=404, detail="Redemption not found")
+
+    # Only the child who made it can cancel
+    if current_user.id != redemption.child_id:
+        raise HTTPException(status_code=403, detail="Only the child who redeemed can cancel")
+    if redemption.status == "fulfilled":
+        raise HTTPException(status_code=400, detail="Already fulfilled — cannot cancel")
+    if redemption.status in ("rejected", "cancelled"):
+        raise HTTPException(status_code=400, detail="Already cancelled or rejected")
+
+    # Refund stars and gems
+    reward = redemption.reward
+    child = await db.get(User, redemption.child_id)
+    if child:
+        child.stars += reward.cost_stars
+        child.gems += reward.cost_gems
+
+    redemption.status = "cancelled"
+    await db.commit()
+    await db.refresh(redemption)
+    return RedemptionResponse.model_validate(redemption)
+
+
+@router.get("/redemptions/pending", response_model=list[RedemptionResponse])
+async def get_pending_fulfillments(
+    current_user: User = Depends(get_current_parent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Parent sees pending reward redemptions that need fulfillment."""
+    result = await db.execute(
+        select(RewardRedemption)
+        .where(
+            RewardRedemption.reward.has(Reward.family_id == current_user.family_id),
+            RewardRedemption.status.in_(["pending", "approved"]),
+        )
+        .order_by(RewardRedemption.redeemed_at.asc())
+    )
+    redemptions = result.scalars().all()
+    return [RedemptionResponse.model_validate(r) for r in redemptions]

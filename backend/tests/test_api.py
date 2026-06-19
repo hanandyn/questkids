@@ -49,7 +49,7 @@ async def parent_token():
         resp = await client.post("/api/v1/auth/register-parent", json={
             "username": "parent1",
             "display_name": "Parent",
-            "password": "secret123",
+            "password": "Secret123",
             "role": "parent",
         })
         data = resp.json()
@@ -66,7 +66,7 @@ class TestAuth:
             resp = await client.post("/api/v1/auth/register-parent", json={
                 "username": "mom",
                 "display_name": "Mom",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             assert resp.status_code == 200
@@ -83,12 +83,12 @@ class TestAuth:
             await client.post("/api/v1/auth/register-parent", json={
                 "username": "dad",
                 "display_name": "Dad",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             resp = await client.post("/api/v1/auth/login", json={
                 "username": "dad",
-                "password": "secret123",
+                "password": "Secret123",
             })
             assert resp.status_code == 200
             data = resp.json()
@@ -102,7 +102,7 @@ class TestAuth:
             await client.post("/api/v1/auth/register-parent", json={
                 "username": "testp",
                 "display_name": "Test",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             resp = await client.post("/api/v1/auth/login", json={
@@ -119,7 +119,7 @@ class TestAuth:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "p2",
                 "display_name": "Parent",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -127,7 +127,7 @@ class TestAuth:
             resp = await client.post("/api/v1/auth/create-child", json={
                 "username": "kid1",
                 "display_name": "Yossi",
-                "password": "kidpass",
+                "password": "KidPass1",
                 "role": "child",
                 "age_tier": 3,
             }, headers={"Authorization": f"Bearer {token}"})
@@ -152,7 +152,7 @@ class TestTasks:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "tp",
                 "display_name": "TP",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -174,7 +174,7 @@ class TestTasks:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "flowparent",
                 "display_name": "Flow",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -183,7 +183,7 @@ class TestTasks:
             await client.post("/api/v1/auth/create-child", json={
                 "username": "flowkid",
                 "display_name": "Flow Kid",
-                "password": "kid123",
+                "password": "Kid1234",
                 "role": "child",
                 "age_tier": 3,
             }, headers={"Authorization": f"Bearer {token}"})
@@ -199,7 +199,7 @@ class TestTasks:
             # Login as child
             kid_login = await client.post("/api/v1/auth/login", json={
                 "username": "flowkid",
-                "password": "kid123",
+                "password": "Kid1234",
             })
             kid_token = kid_login.json()["access_token"]
 
@@ -232,7 +232,7 @@ class TestRewards:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "rp",
                 "display_name": "RP",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -260,7 +260,7 @@ class TestFamilyGoals:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "goalparent",
                 "display_name": "Goal Parent",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -301,7 +301,7 @@ class TestFamilyGoals:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "delgoal",
                 "display_name": "Del Goal",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -328,20 +328,20 @@ class TestFamilyGoals:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "gparent2",
                 "display_name": "GP",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
             await client.post("/api/v1/auth/create-child", json={
                 "username": "gkid2",
                 "display_name": "G Kid",
-                "password": "kid123",
+                "password": "Kid1234",
                 "role": "child",
                 "age_tier": 2,
             }, headers={"Authorization": f"Bearer {token}"})
 
             kid_login = await client.post("/api/v1/auth/login", json={
-                "username": "gkid2", "password": "kid123",
+                "username": "gkid2", "password": "Kid1234",
             })
             kid_token = kid_login.json()["access_token"]
 
@@ -371,7 +371,7 @@ class TestCheers:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "cheerp",
                 "display_name": "Cheer P",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -379,21 +379,21 @@ class TestCheers:
             await client.post("/api/v1/auth/create-child", json={
                 "username": "cheer1",
                 "display_name": "Cheer Kid 1",
-                "password": "kid123",
+                "password": "Kid1234",
                 "role": "child",
                 "age_tier": 2,
             }, headers={"Authorization": f"Bearer {token}"})
             child2_resp = await client.post("/api/v1/auth/create-child", json={
                 "username": "cheer2",
                 "display_name": "Cheer Kid 2",
-                "password": "kid123",
+                "password": "Kid1234",
                 "role": "child",
                 "age_tier": 2,
             }, headers={"Authorization": f"Bearer {token}"})
             child2_id = child2_resp.json()["id"]
 
             kid1_login = await client.post("/api/v1/auth/login", json={
-                "username": "cheer1", "password": "kid123",
+                "username": "cheer1", "password": "Kid1234",
             })
             kid1_token = kid1_login.json()["access_token"]
 
@@ -414,7 +414,7 @@ class TestCheers:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "limitp2",
                 "display_name": "Limit P2",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -422,21 +422,21 @@ class TestCheers:
             await client.post("/api/v1/auth/create-child", json={
                 "username": "sender_kid2",
                 "display_name": "Sender2",
-                "password": "kid123",
+                "password": "Kid1234",
                 "role": "child",
                 "age_tier": 2,
             }, headers={"Authorization": f"Bearer {token}"})
             recv_resp = await client.post("/api/v1/auth/create-child", json={
                 "username": "receiver_kid2",
                 "display_name": "Receiver2",
-                "password": "kid123",
+                "password": "Kid1234",
                 "role": "child",
                 "age_tier": 2,
             }, headers={"Authorization": f"Bearer {token}"})
             receiver_id = recv_resp.json()["id"]
 
             kid_login = await client.post("/api/v1/auth/login", json={
-                "username": "sender_kid2", "password": "kid123",
+                "username": "sender_kid2", "password": "Kid1234",
             })
             kid_token = kid_login.json()["access_token"]
 
@@ -468,7 +468,7 @@ class TestRecap:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "recapp",
                 "display_name": "Recap P",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -488,7 +488,7 @@ class TestRecap:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "tipsp",
                 "display_name": "Tips P",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]
@@ -507,7 +507,7 @@ class TestRecap:
             reg = await client.post("/api/v1/auth/register-parent", json={
                 "username": "analyticsp",
                 "display_name": "Analytics P",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token = reg.json()["access_token"]

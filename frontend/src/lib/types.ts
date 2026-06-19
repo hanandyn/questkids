@@ -562,3 +562,69 @@ export interface NotificationPreferences {
   sounds: boolean;
   toasts: boolean;
 }
+
+// Phase 8: Sound Settings
+export interface SoundSettingsData {
+  master_volume: number;
+  music_volume: number;
+  sfx_volume: number;
+  muted: boolean;
+}
+
+// Phase 8: Daily Rituals
+export interface RitualData {
+  ritual_type: 'morning' | 'after_school' | 'evening' | 'weekend';
+  time_window_start?: string | null;
+  time_window_end?: string | null;
+  enabled: boolean;
+}
+
+export interface RitualStatus {
+  active_ritual: string | null;
+  message: string | null;
+}
+
+// Phase 8: Family Messages
+export interface FamilyMessage {
+  id: number;
+  family_id: number;
+  sender_id?: number | null;
+  sender_name?: string | null;
+  message: string;
+  type: 'announcement' | 'cheer' | 'reminder' | 'system';
+  pinned: boolean;
+  created_at?: string | null;
+}
+
+// Phase 8: Task Suggestions
+export interface TaskSuggestion {
+  id: number;
+  suggestion_type: 'timer' | 'difficulty' | 'schedule' | 'new_task' | 'pricing';
+  title: string;
+  description?: string | null;
+  reason?: string | null;
+  related_task_id?: number | null;
+  suggested_change?: Record<string, unknown> | null;
+  status: 'pending' | 'applied' | 'dismissed';
+  created_at?: string | null;
+}
+
+// Phase 8: Analytics
+export interface ChildTrends {
+  child_id: number;
+  period_days: number;
+  total_completed: number;
+  daily: Array<{
+    date: string;
+    total: number;
+    completed: number;
+    rate: number;
+    points: number;
+  }>;
+  day_of_week_performance: Record<string, number>;
+  average_completion_seconds?: number;
+  category_breakdown: Record<string, number>;
+  completion_rate: number;
+  best_day?: string | null;
+  worst_day?: string | null;
+}

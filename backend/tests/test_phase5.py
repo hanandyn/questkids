@@ -49,7 +49,7 @@ async def parent_token():
         resp = await client.post("/api/v1/auth/register-parent", json={
             "username": "phase5parent",
             "display_name": "Parent",
-            "password": "secret123",
+            "password": "Secret123",
             "role": "parent",
         })
         data = resp.json()
@@ -67,14 +67,14 @@ async def child_token(parent_token):
         await client.post("/api/v1/auth/create-child", headers=headers, json={
             "username": "phase5child",
             "display_name": "Child",
-            "password": "child123",
+            "password": "Child123",
             "role": "child",
             "age_tier": 2,
         })
         # Login as child
         resp = await client.post("/api/v1/auth/login", json={
             "username": "phase5child",
-            "password": "child123",
+            "password": "Child123",
         })
         data = resp.json()
         return {"token": data["access_token"], "user": data["user"]}
@@ -114,7 +114,7 @@ class TestOrganizations:
             resp2 = await client.post("/api/v1/auth/register-parent", json={
                 "username": "joiner",
                 "display_name": "Joiner",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             token2 = resp2.json()["access_token"]
@@ -260,7 +260,7 @@ class TestSchool:
 
             # Create a child
             child_resp = await client.post("/api/v1/auth/create-child", headers=headers, json={
-                "username": "student1", "display_name": "Student", "password": "pass123",
+                "username": "student1", "display_name": "Student", "password": "Pass123",
                 "role": "child", "age_tier": 3,
             })
             child_id = child_resp.json()["id"]
@@ -296,7 +296,7 @@ class TestSchool:
                 "name": "School2", "type": "school",
             })
             child_resp = await client.post("/api/v1/auth/create-child", headers=headers, json={
-                "username": "student2", "display_name": "Student2", "password": "pass123",
+                "username": "student2", "display_name": "Student2", "password": "Pass123",
                 "role": "child", "age_tier": 3,
             })
             child_id = child_resp.json()["id"]
@@ -311,7 +311,7 @@ class TestSchool:
 
             # Login as child
             child_login = await client.post("/api/v1/auth/login", json={
-                "username": "student2", "password": "pass123",
+                "username": "student2", "password": "Pass123",
             })
             child_headers = {"Authorization": f"Bearer {child_login.json()['access_token']}"}
 
@@ -432,7 +432,7 @@ class TestHealthCheck:
             resp = await client.get("/api/v1/health")
             assert resp.status_code == 200
             data = resp.json()
-            assert data["version"] == "0.7.0"
+            assert data["version"] == "0.8.0"
             assert "database" in data
         finally:
             await client.aclose()

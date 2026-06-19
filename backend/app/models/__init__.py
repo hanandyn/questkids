@@ -13,3 +13,7 @@ from .seasonal_event import SeasonalEvent
 from .homework import HomeworkAssignment
 from .notification import Notification
 from .avatar import AvatarItem, ChildAvatarItem
+from .sound_settings import SoundSettings
+from .daily_ritual import DailyRitual
+from .family_message import FamilyMessage
+from .task_suggestion import TaskSuggestion

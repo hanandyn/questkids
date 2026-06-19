@@ -49,7 +49,7 @@ async def parent_token():
         resp = await client.post("/api/v1/auth/register-parent", json={
             "username": "phase6parent",
             "display_name": "Parent",
-            "password": "secret123",
+            "password": "Secret123",
             "role": "parent",
         })
         data = resp.json()
@@ -67,13 +67,13 @@ async def child_token(parent_token):
         await client.post("/api/v1/auth/create-child", headers=headers, json={
             "username": "phase6child",
             "display_name": "Child",
-            "password": "child123",
+            "password": "Child123",
             "role": "child",
             "age_tier": 2,
         })
         resp = await client.post("/api/v1/auth/login", json={
             "username": "phase6child",
-            "password": "child123",
+            "password": "Child123",
         })
         data = resp.json()
         return {"token": data["access_token"], "user": data["user"]}
@@ -324,13 +324,13 @@ class TestRateLimiting:
             await client.post("/api/v1/auth/register-parent", json={
                 "username": "ratelimit",
                 "display_name": "RL",
-                "password": "secret123",
+                "password": "Secret123",
                 "role": "parent",
             })
             # Login normally
             resp = await client.post("/api/v1/auth/login", json={
                 "username": "ratelimit",
-                "password": "secret123",
+                "password": "Secret123",
             })
             assert resp.status_code == 200
         finally:
@@ -344,7 +344,7 @@ class TestRateLimiting:
                 resp = await client.post("/api/v1/auth/register-parent", json={
                     "username": f"normaluser{i}",
                     "display_name": f"User{i}",
-                    "password": "secret123",
+                    "password": "Secret123",
                     "role": "parent",
                 })
                 assert resp.status_code == 200, f"Register {i} failed: {resp.text}"

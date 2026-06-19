@@ -42,6 +42,7 @@ class RewardRedemption(Base):
     status = Column(String, default="pending")  # pending, approved, fulfilled, rejected
     redeemed_at = Column(DateTime(timezone=True), server_default=func.now())
     fulfilled_at = Column(DateTime(timezone=True), nullable=True)
+    notes = Column(String, nullable=True)  # parent notes on fulfillment
 
     # Relationships
     reward = relationship("Reward", back_populates="redemptions")

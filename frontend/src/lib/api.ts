@@ -209,4 +209,32 @@ export const api = {
 
   // Phase 7: Notification Preferences
   getNotificationPreferences: () => apiFetch('/notifications/preferences'),
+
+  // Phase 8: Sound Settings
+  getSoundSettings: () => apiFetch('/settings/sound'),
+  updateSoundSettings: (data: JSONData) => apiFetch('/settings/sound', { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Phase 8: Daily Rituals
+  getRituals: () => apiFetch('/settings/rituals'),
+  updateRituals: (data: JSONData) => apiFetch('/settings/rituals', { method: 'PUT', body: JSON.stringify(data) }),
+  getRitualStatus: () => apiFetch('/settings/rituals/status'),
+
+  // Phase 8: Family Messages
+  getFamilyMessages: (limit = 50) => apiFetch(`/family/messages?limit=${limit}`),
+  sendFamilyMessage: (data: JSONData) => apiFetch('/family/messages', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Phase 8: Task Suggestions
+  getSuggestions: (refresh = false) => apiFetch(`/suggestions/tasks${refresh ? '?refresh=true' : ''}`),
+  applySuggestion: (id: number) => apiFetch(`/suggestions/${id}/apply`, { method: 'POST' }),
+  dismissSuggestion: (id: number) => apiFetch(`/suggestions/${id}/dismiss`, { method: 'POST' }),
+
+  // Phase 8: Analytics
+  getChildTrends: (childId: number, days = 30) => apiFetch(`/analytics/child/${childId}/trends?days=${days}`),
+  getChildExportPdfUrl: (childId: number) => `/api/v1/analytics/child/${childId}/export/pdf`,
+  getFamilyExportCsvUrl: () => `/api/v1/analytics/family/export/csv`,
+
+  // Phase 8: Reward Fulfillment
+  fulfillRedemption: (id: number, notes?: string) => apiFetch(`/rewards/redemptions/${id}/fulfill`, { method: 'POST', body: JSON.stringify({ notes }) }),
+  cancelRedemption: (id: number) => apiFetch(`/rewards/redemptions/${id}/cancel`, { method: 'POST' }),
+  getPendingRedemptions: () => apiFetch('/rewards/redemptions/pending'),
 };

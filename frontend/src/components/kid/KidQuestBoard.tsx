@@ -19,6 +19,7 @@ import { PowerUpShop } from './PowerUpShop';
 import { SchoolQuests } from './SchoolQuests';
 import { SeasonalBanner } from './SeasonalBanner';
 import { SettingsPanel } from '../settings/SettingsPanel';
+import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
 import { useCheers } from '../../lib/useCheers';
 import * as sounds from '../../lib/sounds';
 
@@ -254,7 +255,7 @@ export function KidQuestBoard() {
             <h1 className="text-xl font-bold flex items-center gap-2 cursor-pointer"
               onClick={() => { sounds.playButtonClick(); setActiveView('quests'); }}
             >
-              🏰 QuestKids <span className="text-xs text-gray-300 ml-1">v0.7.0</span>
+              🏰 QuestKids <span className="text-xs text-gray-300 ml-1">v0.8.0</span>
             </h1>
             <div className="flex items-center gap-2 text-sm">
               <NotificationBell />
@@ -621,6 +622,13 @@ export function KidQuestBoard() {
 
         {/* Leaderboard View */}
         {activeView === 'leaderboard' && <EnhancedLeaderboard />}
+
+        {/* Phase 8: Family Board (shown on quests view) */}
+        {activeView === 'quests' && (
+          <div className="mt-6">
+            <FamilyMessageBoard />
+          </div>
+        )}
       </div>
     </div>
   );

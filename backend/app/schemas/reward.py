@@ -47,6 +47,7 @@ class RedemptionResponse(BaseModel):
     status: str
     redeemed_at: Optional[datetime] = None
     fulfilled_at: Optional[datetime] = None
+    notes: Optional[str] = None
     reward: Optional[RewardResponse] = None
 
     model_config = {"from_attributes": True}

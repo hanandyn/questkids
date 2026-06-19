@@ -2,6 +2,7 @@
 
 import uuid
 import smtplib
+from datetime import timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
@@ -38,6 +39,19 @@ async def check_rate_limit(request: Request, rate: str, key: str):
         pass  # Gracefully ignore in test/degraded mode
 
 
+def validate_password_strength(password: str) -> str | None:
+    """Validate password meets strength requirements. Returns error message or None."""
+    if len(password) < 8:
+        return "Password must be at least 8 characters"
+    if not any(c.islower() for c in password):
+        return "Password must contain at least one lowercase letter"
+    if not any(c.isupper() for c in password):
+        return "Password must contain at least one uppercase letter"
+    if not any(c.isdigit() for c in password):
+        return "Password must contain at least one number"
+    return None
+
+
 @router.post("/register-parent", response_model=TokenResponse)
 async def register_parent(
     data: UserCreate,
@@ -46,6 +60,11 @@ async def register_parent(
 ):
     """Register a new parent user with their family."""
     await check_rate_limit(request, "3/minute", key="register-parent")
+
+    # Validate password strength
+    pw_error = validate_password_strength(data.password)
+    if pw_error:
+        raise HTTPException(status_code=400, detail=pw_error)
 
     # Check existing username
     result = await db.execute(select(User).where(User.username == data.username))
@@ -91,9 +110,34 @@ async def login(
 
     result = await db.execute(select(User).where(User.username == data.username))
     user = result.scalar_one_or_none()
-    
+
+    # Check account lockout
+    from datetime import datetime, timezone
+    if user and user.locked_until:
+        if user.locked_until > datetime.now(timezone.utc):
+            remaining = int((user.locked_until - datetime.now(timezone.utc)).total_seconds() / 60) + 1
+            raise HTTPException(
+                status_code=423,
+                detail=f"Account locked. Try again in {remaining} minutes.",
+            )
+        else:
+            # Lockout expired, reset
+            user.locked_until = None
+            user.failed_login_attempts = 0
+
     if not user or not verify_password(data.password, user.hashed_password):
+        if user:
+            user.failed_login_attempts += 1
+            if user.failed_login_attempts >= 5:
+                user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
+            await db.commit()
         raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    # Reset failed attempts on successful login
+    if user.failed_login_attempts > 0:
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        await db.commit()
 
     token = create_access_token(data={"sub": str(user.id), "role": user.role})
     return TokenResponse(access_token=token, user=UserResponse.model_validate(user))

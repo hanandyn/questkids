@@ -38,6 +38,10 @@ class User(Base):
     allowance_currency = Column(String, default="USD")
     savings_goal = Column(Integer, default=0)  # in currency units
     
+    # Account lockout
+    failed_login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime(timezone=True), nullable=True)
+
     email_verified = Column(Boolean, default=False)
     verification_token = Column(String, nullable=True)
 

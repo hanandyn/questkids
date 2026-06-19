@@ -11,3 +11,4 @@ from .organization import Organization, OrganizationMember
 from .apikey import ApiKey
 from .seasonal_event import SeasonalEvent
 from .homework import HomeworkAssignment
+from .notification import Notification

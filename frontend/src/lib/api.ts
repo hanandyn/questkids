@@ -154,4 +154,39 @@ export const api = {
 
   // Phase 5: Seasonal Events
   getActiveEvents: () => apiFetch('/events/active'),
+
+  // Phase 6: Notifications
+  getNotifications: (limit = 50, offset = 0) => apiFetch(`/notifications?limit=${limit}&offset=${offset}`),
+  getUnreadCount: () => apiFetch('/notifications/unread-count'),
+  markNotificationRead: (id: number) => apiFetch(`/notifications/${id}/read`, { method: 'POST' }),
+  markAllNotificationsRead: () => apiFetch('/notifications/read-all', { method: 'POST' }),
+
+  // Phase 6: Photo Verification
+  uploadTaskPhoto: (instanceId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(`/api/v1/tasks/instances/${instanceId}/upload-photo`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    }).then(res => {
+      if (!res.ok) return res.json().then(e => { throw new Error(e.detail || 'Upload failed'); });
+      return res.json();
+    }) as Promise<{ photo_url: string; message: string }>;
+  },
+  getTaskPhotoUrl: (instanceId: number) => `/api/v1/tasks/instances/${instanceId}/photo`,
+  getPendingApprovals: () => apiFetch('/tasks/pending-approvals'),
+
+  // Phase 6: Email Verification
+  verifyEmail: (token: string) => apiFetch(`/auth/verify-email/${token}`, { method: 'POST' }),
+  resendVerification: () => apiFetch('/auth/resend-verification', { method: 'POST' }),
+
+  // Phase 6: Admin Metrics
+  getAdminMetrics: () => apiFetch('/admin/metrics'),
+
+  // Phase 6: Health
+  getDetailedHealth: () => apiFetch('/health/detailed'),
 };

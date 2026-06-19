@@ -62,6 +62,7 @@ class UserResponse(BaseModel):
     last_daily_spin: Optional[datetime] = None
     completed_since_last_chest: int
     total_tasks_completed: int
+    email_verified: bool = False
     created_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}

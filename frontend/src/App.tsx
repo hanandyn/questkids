@@ -1,7 +1,9 @@
 /* eslint-disable react-hooks/immutability */
 import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/auth/LoginPage';
+import { EmailVerificationPage } from './components/auth/EmailVerificationPage';
 import { ParentDashboard } from './components/parent/ParentDashboard';
 import { KidQuestBoard } from './components/kid/KidQuestBoard';
 import { TeenDashboard } from './components/kid/TeenDashboard';
@@ -71,7 +73,14 @@ function AppContent() {
   }
 
   if (!user) {
-    return <main id="main-content"><LoginPage /></main>;
+    return (
+      <main id="main-content">
+        <Routes>
+          <Route path="/verify-email" element={<EmailVerificationPage />} />
+          <Route path="*" element={<LoginPage />} />
+        </Routes>
+      </main>
+    );
   }
 
   // Tier 5 teens get their own dashboard
@@ -103,9 +112,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

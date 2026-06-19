@@ -10,13 +10,15 @@ import { OrganizationDashboard } from './OrganizationDashboard';
 import { TemplateMarketplace } from './TemplateMarketplace';
 import { CalendarPage } from './CalendarPage';
 import { TeacherDashboard } from './TeacherDashboard';
+import { NotificationBell } from '../shared/NotificationBell';
+import { AdminMetricsPanel } from './AdminMetricsPanel';
 
 export function ParentDashboard() {
   const { user, logout } = useAuth();
   const [children, setChildren] = useState<User[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [activeTab, setActiveTab] = useState<'children' | 'tasks' | 'rewards' | 'goals' | 'recap' | 'insights' | 'organizations' | 'marketplace' | 'calendar' | 'teacher'>('children');
+  const [activeTab, setActiveTab] = useState<'children' | 'tasks' | 'rewards' | 'goals' | 'recap' | 'insights' | 'organizations' | 'marketplace' | 'calendar' | 'teacher' | 'metrics'>('children');
   const [showAddChild, setShowAddChild] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddReward, setShowAddReward] = useState(false);
@@ -136,9 +138,10 @@ export function ParentDashboard() {
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            🏰 QuestKids <span className="text-sm text-gray-400">| Parent</span> <span className="text-xs text-gray-300 ml-1">v0.5.0</span>
+            🏰 QuestKids <span className="text-sm text-gray-400">| Parent</span> <span className="text-xs text-gray-300 ml-1">v0.6.0</span>
           </h1>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             <span className="text-sm text-gray-500">👋 {user?.display_name}</span>
             <button onClick={logout} className="text-sm text-red-500 hover:underline">{'Logout'}</button>
           </div>
@@ -159,7 +162,7 @@ export function ParentDashboard() {
 
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6">
-          {(['children', 'tasks', 'rewards', 'goals', 'recap', 'insights', 'marketplace', 'organizations', 'calendar', 'teacher'] as const).map(tab => (
+          {(['children', 'tasks', 'rewards', 'goals', 'recap', 'insights', 'marketplace', 'organizations', 'calendar', 'teacher', 'metrics'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -169,7 +172,7 @@ export function ParentDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
-              {tab === 'children' ? '👶 Children' : tab === 'tasks' ? '📋 Tasks' : tab === 'rewards' ? '🎁 Rewards' : tab === 'goals' ? '🎯 Goals' : tab === 'recap' ? '📊 Recap' : tab === 'insights' ? '💡 Insights' : tab === 'marketplace' ? '📋 Marketplace' : tab === 'organizations' ? '🏫 Orgs' : tab === 'calendar' ? '📅 Calendar' : '👩‍🏫 Teacher'}
+              {tab === 'children' ? '👶 Children' : tab === 'tasks' ? '📋 Tasks' : tab === 'rewards' ? '🎁 Rewards' : tab === 'goals' ? '🎯 Goals' : tab === 'recap' ? '📊 Recap' : tab === 'insights' ? '💡 Insights' : tab === 'marketplace' ? '📋 Marketplace' : tab === 'organizations' ? '🏫 Orgs' : tab === 'calendar' ? '📅 Calendar' : tab === 'teacher' ? '👩‍🏫 Teacher' : '📈 Metrics'}
             </button>
           ))}
         </div>
@@ -420,6 +423,9 @@ export function ParentDashboard() {
         {activeTab === 'organizations' && <OrganizationDashboard onClose={() => setActiveTab('children')} />}
         {activeTab === 'calendar' && <CalendarPage />}
         {activeTab === 'teacher' && <TeacherDashboard onClose={() => setActiveTab('children')} />}
+
+        {/* Phase 6: Metrics */}
+        {activeTab === 'metrics' && <AdminMetricsPanel />}
       </div>
     </div>
   );

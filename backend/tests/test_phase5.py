@@ -432,7 +432,7 @@ class TestHealthCheck:
             resp = await client.get("/api/v1/health")
             assert resp.status_code == 200
             data = resp.json()
-            assert data["version"] == "0.5.0"
+            assert data["version"] == "0.6.0"
             assert "database" in data
         finally:
             await client.aclose()

@@ -1,19 +1,23 @@
 """Task API routes."""
 
+import os
+import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 
 from ..core.database import get_db
+from ..core.config import settings
 from ..core.auth import get_current_user, get_current_parent
 from ..models.user import User
 from ..models.task import TaskTemplate, TaskInstance
 from ..schemas.task import (
     TaskTemplateCreate, TaskTemplateResponse,
     TaskInstanceResponse, TimerStartRequest, TimerCompleteRequest,
-    TaskApproveRequest,
+    TaskApproveRequest, PhotoUploadResponse, PendingApprovalResponse,
 )
 from ..services.scoring import (
     calculate_task_points, xp_for_next_level, calculate_level_from_xp,
@@ -268,7 +272,11 @@ async def approve_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Parent approves or rejects a completed task (for photo verification etc.)."""
-    result = await db.execute(select(TaskInstance).where(TaskInstance.id == instance_id))
+    result = await db.execute(
+        select(TaskInstance)
+        .options(selectinload(TaskInstance.template))
+        .where(TaskInstance.id == instance_id)
+    )
     instance = result.scalar_one_or_none()
     if not instance:
         raise HTTPException(status_code=404, detail="Task instance not found")
@@ -318,3 +326,111 @@ async def get_child_stats(
     weekly = await get_child_weekly_stats(db, child_id)
     
     return {"all_time": all_time, "weekly": weekly}
+
+
+# ── Photo Verification ──────────────────────────────────────────────────
+
+@router.post("/instances/{instance_id}/upload-photo", response_model=PhotoUploadResponse)
+async def upload_task_photo(
+    instance_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Kid uploads a photo as proof of task completion."""
+    result = await db.execute(
+        select(TaskInstance).options(selectinload(TaskInstance.template))
+        .where(TaskInstance.id == instance_id)
+    )
+    instance = result.scalar_one_or_none()
+    if not instance:
+        raise HTTPException(status_code=404, detail="Task instance not found")
+    if current_user.role == "child" and instance.child_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your task")
+
+    # Validate file type
+    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"File type {file.content_type} not allowed. Use JPEG, PNG, WebP, or GIF.")
+
+    # Ensure upload dir exists
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+
+    # Generate unique filename
+    ext = file.filename.split(".")[-1] if file.filename and "." in file.filename else "jpg"
+    unique_name = f"task_{instance_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = os.path.join(settings.UPLOAD_DIR, unique_name)
+
+    # Save file
+    contents = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    # Update instance
+    instance.photo_url = unique_name
+    await db.commit()
+
+    return PhotoUploadResponse(photo_url=unique_name)
+
+
+@router.get("/instances/{instance_id}/photo")
+async def get_task_photo(
+    instance_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Serve a task's photo. Parents can see any family task; kids can see their own."""
+    result = await db.execute(
+        select(TaskInstance).options(selectinload(TaskInstance.template))
+        .where(TaskInstance.id == instance_id)
+    )
+    instance = result.scalar_one_or_none()
+    if not instance or not instance.photo_url:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    # Check access
+    if current_user.role == "parent":
+        if instance.template.family_id != current_user.family_id:
+            raise HTTPException(status_code=403, detail="Not in your family")
+    else:
+        if instance.child_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not your task")
+
+    file_path = os.path.join(settings.UPLOAD_DIR, instance.photo_url)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Photo file not found on disk")
+
+    return FileResponse(file_path)
+
+
+@router.get("/pending-approvals", response_model=list[PendingApprovalResponse])
+async def get_pending_approvals(
+    current_user: User = Depends(get_current_parent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Parent gets list of tasks with photos awaiting approval."""
+    result = await db.execute(
+        select(TaskInstance)
+        .options(selectinload(TaskInstance.template), selectinload(TaskInstance.child))
+        .where(
+            TaskInstance.status == "completed",
+            TaskInstance.parent_approved_at == None,
+            TaskInstance.photo_url != None,
+            TaskInstance.template.has(TaskTemplate.family_id == current_user.family_id),
+        )
+        .order_by(TaskInstance.timer_ended_at.desc())
+    )
+    instances = result.unique().scalars().all()
+
+    return [
+        PendingApprovalResponse(
+            id=i.id,
+            template_name=i.template.name if i.template else "Unknown",
+            child_name=i.child.display_name if i.child else "Unknown",
+            child_id=i.child_id,
+            photo_url=i.photo_url,
+            completed_at=i.timer_ended_at,
+            status=i.status,
+        )
+        for i in instances
+    ]

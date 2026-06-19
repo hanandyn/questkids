@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { NotificationBell } from '../shared/NotificationBell';
 import { api } from '../../lib/api';
 import type { TaskInstance, Reward, SpinResult, ChestResult } from '../../lib/types';
 import { CountdownTimer } from '../timer/CountdownTimer';
@@ -253,9 +254,10 @@ export function KidQuestBoard() {
             <h1 className="text-xl font-bold flex items-center gap-2 cursor-pointer"
               onClick={() => { sounds.playButtonClick(); setActiveView('quests'); }}
             >
-              🏰 QuestKids <span className="text-xs text-gray-300 ml-1">v0.5.0</span>
+              🏰 QuestKids <span className="text-xs text-gray-300 ml-1">v0.6.0</span>
             </h1>
             <div className="flex items-center gap-2 text-sm">
+              <NotificationBell />
               <button onClick={handleSoundToggle} className="text-lg" title={muted ? 'Unmute' : 'Mute'}>
                 {muted ? '🔇' : '🔊'}
               </button>

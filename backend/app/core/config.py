@@ -20,6 +20,22 @@ class Settings(BaseSettings):
     # File storage path
     UPLOAD_DIR: str = "./uploads"
 
+    # SMTP settings for email verification
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@questkids.local"
+    SMTP_USE_TLS: bool = True
+    BASE_URL: str = "http://localhost:5173"
+
+    # Rate limiting
+    RATE_LIMIT_ENABLED: bool = True
+
+    # Backup
+    BACKUP_DIR: str = "./backups"
+    BACKUP_RETENTION_DAYS: int = 7
+
     class Config:
         env_file = ".env"
         case_sensitive = True

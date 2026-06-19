@@ -428,3 +428,35 @@ export interface HomeworkAssignment {
   completed_at?: string;
   created_at?: string;
 }
+
+// Phase 6: Notifications
+export interface Notification {
+  id: number;
+  title: string;
+  body?: string;
+  type: 'streak_risk' | 'milestone' | 'leaderboard' | 'achievement' | 'system';
+  read: boolean;
+  link?: string;
+  created_at?: string;
+}
+
+// Phase 6: Photo Verification
+export interface PendingApproval {
+  id: number;
+  template_name: string;
+  child_name: string;
+  child_id: number;
+  photo_url?: string;
+  completed_at?: string;
+  status: string;
+}
+
+// Phase 6: Admin Metrics
+export interface AdminMetrics {
+  user_count: number;
+  parent_count: number;
+  child_count: number;
+  family_count: number;
+  tasks_completed_today: number;
+  active_streaks: number;
+}

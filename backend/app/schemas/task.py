@@ -119,3 +119,18 @@ class TimerCompleteRequest(BaseModel):
 class TaskApproveRequest(BaseModel):
     approved: bool
     notes: Optional[str] = None
+
+
+class PhotoUploadResponse(BaseModel):
+    photo_url: str
+    message: str = "Photo uploaded successfully"
+
+
+class PendingApprovalResponse(BaseModel):
+    id: int
+    template_name: str
+    child_name: str
+    child_id: int
+    photo_url: Optional[str] = None
+    completed_at: Optional[datetime] = None
+    status: str

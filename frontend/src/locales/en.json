@@ -417,5 +417,39 @@
   "events": {
     "bonus": "Bonus Points!",
     "active": "Active Event"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet",
+    "markAllRead": "Mark all read",
+    "justNow": "Just now"
+  },
+  "photo": {
+    "proof": "Photo Proof",
+    "takePhoto": "Take Photo",
+    "uploading": "Uploading...",
+    "invalidType": "Please upload a JPEG, PNG, WebP, or GIF image",
+    "tooLarge": "Photo is too large (max 10MB)",
+    "awaitingApproval": "Awaiting Approval",
+    "approved": "Approved!",
+    "rejected": "Please try again",
+    "noPending": "No photos awaiting approval"
+  },
+  "emailVerification": {
+    "checking": "Verifying your email...",
+    "pleaseWait": "Please wait a moment",
+    "verified": "Email Verified!",
+    "success": "Your email has been verified. You're all set!",
+    "failed": "Verification Failed",
+    "missingToken": "No verification token provided",
+    "goToApp": "Go to App",
+    "backToLogin": "Back to Login"
+  },
+  "metrics": {
+    "title": "Family Metrics",
+    "users": "Users",
+    "families": "Families",
+    "tasksToday": "Tasks Today",
+    "activeStreaks": "Active Streaks"
   }
 }

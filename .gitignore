@@ -45,3 +45,7 @@ docker-compose.override.yml
 
 # Logs
 *.log
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep

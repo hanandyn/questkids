@@ -267,7 +267,7 @@ export function ParentDashboard() {
             <div className="flex justify-between items-center mb-4 gap-2">
               <h2 className="text-xl font-bold">Task Templates ({templates.length})</h2>
               <div className="flex gap-2">
-                <NLTaskCreator children={children} onCreated={() => { loadAll(); }} />
+                <NLTaskCreator children={children} onCreated={() => { loadData(); }} />
                 <button onClick={() => setShowAddTask(true)} className="btn-primary">
                   + Create Task
                 </button>

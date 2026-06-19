@@ -87,7 +87,7 @@ export function KidDailyRecap() {
               <span className="text-sm">{t('recap.completion', 'Completion')}</span>
               <span className="text-sm font-bold">{completionRate}%</span>
               {vsYesterday && (vsYesterday.trend as string) === '↑' && (
-                <span className="text-xs bg-green-400/30 px-2 rounded-full">{vsYesterday.trend} {vsYesterday.percentage}</span>
+                <span className="text-xs bg-green-400/30 px-2 rounded-full">{vsYesterday.trend as string} {vsYesterday.percentage as string}</span>
               )}
             </div>
             <div className="h-3 bg-white/20 rounded-full overflow-hidden">

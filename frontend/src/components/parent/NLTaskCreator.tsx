@@ -140,12 +140,12 @@ export function NLTaskCreator({ children, onCreated }: { children: User[]; onCre
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <Field label="Name" value={parsed.name as string} />
                     <Field label="Type" value={parsed.task_type as string} />
-                    <Field label="Points" value={`⭐ ${parsed.base_points}`} />
-                    {parsed.timer_duration && <Field label="Timer" value={`${(parsed.timer_duration as number) / 60} min`} />}
+                    <Field label="Points" value={`⭐ ${parsed.base_points as number}`} />
+                    {parsed.timer_duration ? <Field label="Timer" value={`${(parsed.timer_duration as number) / 60} min`} /> : null}
                     <Field label="Schedule" value={parsed.schedule_type as string} />
-                    {parsed.assigned_to && <Field label="Assigned to" value={parsed.assigned_to as string} />}
-                    {(parsed.bonus_first_ask as number) > 0 && <Field label="First-ask bonus" value={`+${parsed.bonus_first_ask}⭐`} />}
-                    {(parsed.penalty_per_ask as number) > 0 && <Field label="Penalty/ask" value={`-${parsed.penalty_per_ask}⭐`} />}
+                    {parsed.assigned_to ? <Field label="Assigned to" value={parsed.assigned_to as string} /> : null}
+                    {(parsed.bonus_first_ask as number) > 0 && <Field label="First-ask bonus" value={`+${parsed.bonus_first_ask as number}⭐`} />}
+                    {(parsed.penalty_per_ask as number) > 0 && <Field label="Penalty/ask" value={`-${parsed.penalty_per_ask as number}⭐`} />}
                   </div>
 
                   <div className="flex gap-3 mt-3">

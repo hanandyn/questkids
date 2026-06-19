@@ -14,8 +14,13 @@ class Settings(BaseSettings):
     # Database: SQLite for dev, PostgreSQL for production
     DATABASE_URL: str = "sqlite+aiosqlite:////app/persistent/questkids.db"
 
-    # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # CORS — stored as comma-separated string (Coolify passes plain strings, not JSON arrays)
+    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse comma-separated CORS_ORIGINS into a list for FastAPI middleware."""
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     # File storage path
     UPLOAD_DIR: str = "./uploads"

@@ -103,7 +103,7 @@ class CSRFTokenMiddleware(BaseHTTPMiddleware):
             referer = request.headers.get("referer", "")
             allowed = any(
                 o in origin or o in referer
-                for o in settings.CORS_ORIGINS
+                for o in settings.cors_origins_list
             )
             # In development mode, allow requests without origin (API clients)
             if not origin and not referer:
@@ -124,7 +124,7 @@ app.add_middleware(CSRFTokenMiddleware)
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

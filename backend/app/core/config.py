@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # Database: SQLite for dev, PostgreSQL for production
-    DATABASE_URL: str = "sqlite+aiosqlite:///./questkids.db"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./data/questkids.db"
 
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]

@@ -8,6 +8,7 @@ import { useVoicePrompt } from './useVoicePrompt';
 import { VoiceSettings } from './VoiceSettings';
 import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
 import { TaskVisual } from '../shared/TaskVisual';
+import { RewardShop } from './RewardShop';
 
 /**
  * Little Explorers Dashboard — for ages 3-5
@@ -39,6 +40,7 @@ export function LittleExplorerDashboard() {
   const [petState, setPetState] = useState<PetState | null>(null);
   const [completingId, setCompletingId] = useState<number | null>(null);
   const [showFireworks, setShowFireworks] = useState(false);
+  const [showRewardShop, setShowRewardShop] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -231,6 +233,18 @@ export function LittleExplorerDashboard() {
             <span className="text-2xl">⭐</span>
             <span className="text-xl font-bold text-white">{user?.stars}</span>
           </motion.div>
+          <motion.button
+            whileTap={{ scale: 0.92 }}
+            onClick={() => {
+              audio.playButtonClick();
+              setShowRewardShop(true);
+            }}
+            className="flex items-center gap-2 bg-white/25 hover:bg-white/35 text-white rounded-full px-4 py-2 backdrop-blur border border-white/25 shadow-lg"
+            aria-label="Open reward shop"
+          >
+            <span className="text-2xl">🎁</span>
+            <span className="text-xl font-bold drop-shadow">Shop</span>
+          </motion.button>
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => { speak('Bye bye!', 'greeting'); logout(); }}
@@ -470,6 +484,17 @@ export function LittleExplorerDashboard() {
             </div>
             <span className="text-white font-bold text-xl">{(petState?.stats.stars || 0)}⭐</span>
           </div>
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={() => {
+              audio.playButtonClick();
+              setShowRewardShop(true);
+            }}
+            className="mt-4 w-full min-h-[64px] rounded-3xl bg-white/25 hover:bg-white/35 border-2 border-white/30 text-white font-bold text-2xl shadow-lg"
+            aria-label="Open reward shop"
+          >
+            🎁 Reward Shop
+          </motion.button>
         </motion.div>
       </div>
 
@@ -522,6 +547,20 @@ export function LittleExplorerDashboard() {
       <div className="max-w-2xl mx-auto px-4 pb-6">
         <FamilyMessageBoard />
       </div>
+
+      <AnimatePresence>
+        {showRewardShop && (
+          <motion.div
+            className="fixed inset-0 z-[60] bg-white overflow-y-auto"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.18 }}
+          >
+            <RewardShop onClose={() => setShowRewardShop(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

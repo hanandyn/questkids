@@ -57,7 +57,7 @@ export function LittleExplorerDashboard() {
         setTimeout(() => speakGreeting(msg), 800);
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [speakGreeting]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);

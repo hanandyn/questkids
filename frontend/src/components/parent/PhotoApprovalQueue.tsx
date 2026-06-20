@@ -42,7 +42,10 @@ export function PhotoApprovalQueue() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
+  }, [loadData]);
 
   const handleApprove = async (id: number) => {
     try {

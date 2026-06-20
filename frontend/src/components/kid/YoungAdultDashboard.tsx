@@ -55,7 +55,10 @@ export function YoungAdultDashboard() {
     setPullRefreshing(false);
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
+  }, [loadData]);
 
   const handleRefresh = useCallback(async () => {
     setPullRefreshing(true);

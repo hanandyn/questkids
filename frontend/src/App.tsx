@@ -86,6 +86,7 @@ function AppContent() {
         .catch(() => {})
         .finally(() => setOnboardingChecked(true));
     } else if (!loading && user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOnboardingChecked(true);
     }
   }, [user, loading]);

@@ -30,6 +30,7 @@ export function SearchBar({
 
   // Sync external value
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalValue(value);
   }, [value]);
 

@@ -29,7 +29,7 @@ test.describe('Navigation', () => {
     expect(await viewport.count()).toBeGreaterThanOrEqual(0);
   });
 
-  test('should handle API health check', async ({ page, request }) => {
+  test('should handle API health check', async ({ request }) => {
     const response = await request.get(`${test.info().config.use.baseURL}/api/v1/health`);
     expect(response.status()).toBeLessThan(500);
     const body = await response.json();

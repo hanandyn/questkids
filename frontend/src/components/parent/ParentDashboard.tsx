@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../../lib/api';
 import type { User, TaskTemplate, Reward } from '../../lib/types';
@@ -22,6 +22,16 @@ import { ParentTaskManagement } from './ParentTaskManagement';
 import { NLTaskCreator } from './NLTaskCreator';
 import { PhotoApprovalQueue } from './PhotoApprovalQueue';
 
+type RewardRequest = {
+  id: number;
+  name: string;
+  description?: string;
+  suggested_cost_stars: number;
+  category?: string;
+  status: string;
+  child_id: number;
+};
+
 export function ParentDashboard() {
   const { user, logout } = useAuth();
   const [children, setChildren] = useState<User[]>([]);
@@ -32,7 +42,7 @@ export function ParentDashboard() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddReward, setShowAddReward] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
-  const [rewardRequests, setRewardRequests] = useState<Array<{ id: number; name: string; description?: string; suggested_cost_stars: number; category?: string; status: string; child_id: number }>>([]);
+  const [rewardRequests, setRewardRequests] = useState<RewardRequest[]>([]);
 
   // Child form
   const [childName, setChildName] = useState('');
@@ -61,7 +71,7 @@ export function ParentDashboard() {
 
   const [message, setMessage] = useState('');
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [c, t, r, rr] = await Promise.all([
         api.getChildren(),
@@ -72,14 +82,16 @@ export function ParentDashboard() {
       setChildren(c as unknown as User[]);
       setTemplates(t as unknown as TaskTemplate[]);
       setRewards(r as unknown as Reward[]);
-      setRewardRequests(rr as unknown as typeof rewardRequests);
+      setRewardRequests(rr as unknown as RewardRequest[]);
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
+  }, [loadData]);
 
   const handleAddChild = async (e: React.FormEvent) => {
     e.preventDefault();

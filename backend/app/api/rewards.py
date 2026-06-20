@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Query, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
+from sqlalchemy.orm import selectinload
 
 from ..core.database import get_db
 from ..core.auth import get_current_user, get_current_parent
@@ -150,7 +151,11 @@ async def get_redemptions(
     else:
         query = select(RewardRedemption).where(RewardRedemption.child_id == current_user.id)
 
-    result = await db.execute(query.order_by(RewardRedemption.redeemed_at.desc()))
+    result = await db.execute(
+        query.options(selectinload(RewardRedemption.reward)).order_by(
+            RewardRedemption.redeemed_at.desc()
+        )
+    )
     redemptions = result.scalars().all()
     return [RedemptionResponse.model_validate(r) for r in redemptions]
 
@@ -240,7 +245,11 @@ async def approve_redemption(
     db: AsyncSession = Depends(get_db),
 ):
     """Parent approves a redemption."""
-    result = await db.execute(select(RewardRedemption).where(RewardRedemption.id == redemption_id))
+    result = await db.execute(
+        select(RewardRedemption)
+        .options(selectinload(RewardRedemption.reward))
+        .where(RewardRedemption.id == redemption_id)
+    )
     redemption = result.scalar_one_or_none()
     if not redemption:
         raise HTTPException(status_code=404, detail="Redemption not found")
@@ -265,7 +274,11 @@ async def fulfill_redemption(
     db: AsyncSession = Depends(get_db),
 ):
     """Parent marks a reward as delivered to the child."""
-    result = await db.execute(select(RewardRedemption).where(RewardRedemption.id == redemption_id))
+    result = await db.execute(
+        select(RewardRedemption)
+        .options(selectinload(RewardRedemption.reward))
+        .where(RewardRedemption.id == redemption_id)
+    )
     redemption = result.scalar_one_or_none()
     if not redemption:
         raise HTTPException(status_code=404, detail="Redemption not found")
@@ -291,7 +304,11 @@ async def cancel_redemption(
     db: AsyncSession = Depends(get_db),
 ):
     """Child cancels an unfulfilled redemption to get stars back."""
-    result = await db.execute(select(RewardRedemption).where(RewardRedemption.id == redemption_id))
+    result = await db.execute(
+        select(RewardRedemption)
+        .options(selectinload(RewardRedemption.reward))
+        .where(RewardRedemption.id == redemption_id)
+    )
     redemption = result.scalar_one_or_none()
     if not redemption:
         raise HTTPException(status_code=404, detail="Redemption not found")
@@ -325,6 +342,7 @@ async def get_pending_fulfillments(
     """Parent sees pending reward redemptions that need fulfillment."""
     result = await db.execute(
         select(RewardRedemption)
+        .options(selectinload(RewardRedemption.reward))
         .where(
             RewardRedemption.reward.has(Reward.family_id == current_user.family_id),
             RewardRedemption.status.in_(["pending", "approved"]),

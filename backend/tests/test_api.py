@@ -252,6 +252,131 @@ class TestRewards:
         finally:
             await client.aclose()
 
+    async def test_child_reward_request_parent_approval_flow(self):
+        client = make_client()
+        try:
+            reg = await client.post("/api/v1/auth/register-parent", json={
+                "username": "rewardreqparent",
+                "display_name": "Reward Parent",
+                "password": "Secret123",
+                "role": "parent",
+            })
+            parent_token = reg.json()["access_token"]
+            parent_headers = {"Authorization": f"Bearer {parent_token}"}
+
+            await client.post("/api/v1/auth/create-child", json={
+                "username": "rewardreqkid",
+                "display_name": "Reward Kid",
+                "password": "Kid1234",
+                "role": "child",
+                "age_tier": 3,
+            }, headers=parent_headers)
+
+            kid_login = await client.post("/api/v1/auth/login", json={
+                "username": "rewardreqkid",
+                "password": "Kid1234",
+            })
+            child_headers = {"Authorization": f"Bearer {kid_login.json()['access_token']}"}
+
+            request_resp = await client.post("/api/v1/rewards/requests", json={
+                "name": "Movie night",
+                "description": "Pick a family movie",
+                "suggested_cost_stars": 150,
+                "category": "experiences",
+            }, headers=child_headers)
+            assert request_resp.status_code == 200
+            request = request_resp.json()
+            assert request["status"] == "pending"
+
+            parent_list = await client.get("/api/v1/rewards/requests", headers=parent_headers)
+            assert parent_list.status_code == 200
+            assert parent_list.json()[0]["name"] == "Movie night"
+
+            resolve_resp = await client.post(
+                f"/api/v1/rewards/requests/{request['id']}/resolve",
+                json={"approved": True, "cost_stars": 175, "cost_gems": 1},
+                headers=parent_headers,
+            )
+            assert resolve_resp.status_code == 200
+            assert resolve_resp.json()["status"] == "approved"
+
+            rewards_resp = await client.get("/api/v1/rewards", headers=child_headers)
+            assert rewards_resp.status_code == 200
+            rewards = rewards_resp.json()
+            assert len(rewards) == 1
+            assert rewards[0]["name"] == "Movie night"
+            assert rewards[0]["cost_stars"] == 175
+            assert rewards[0]["cost_gems"] == 1
+        finally:
+            await client.aclose()
+
+    async def test_reward_redemption_approval_and_fulfillment_flow(self):
+        client = make_client()
+        try:
+            reg = await client.post("/api/v1/auth/register-parent", json={
+                "username": "fulfillparent",
+                "display_name": "Fulfill Parent",
+                "password": "Secret123",
+                "role": "parent",
+            })
+            parent_token = reg.json()["access_token"]
+            parent_headers = {"Authorization": f"Bearer {parent_token}"}
+
+            await client.post("/api/v1/auth/create-child", json={
+                "username": "fulfillkid",
+                "display_name": "Fulfill Kid",
+                "password": "Kid1234",
+                "role": "child",
+                "age_tier": 3,
+            }, headers=parent_headers)
+
+            kid_login = await client.post("/api/v1/auth/login", json={
+                "username": "fulfillkid",
+                "password": "Kid1234",
+            })
+            child_headers = {"Authorization": f"Bearer {kid_login.json()['access_token']}"}
+
+            reward_resp = await client.post("/api/v1/rewards", json={
+                "name": "Choose dessert",
+                "cost_stars": 0,
+                "requires_approval": True,
+            }, headers=parent_headers)
+            assert reward_resp.status_code == 200
+            reward_id = reward_resp.json()["id"]
+
+            redeem_resp = await client.post(
+                f"/api/v1/rewards/{reward_id}/redeem",
+                headers=child_headers,
+            )
+            assert redeem_resp.status_code == 200
+            redemption = redeem_resp.json()
+            assert redemption["status"] == "pending"
+
+            pending_resp = await client.get("/api/v1/rewards/redemptions/pending", headers=parent_headers)
+            assert pending_resp.status_code == 200
+            pending = pending_resp.json()
+            assert len(pending) == 1
+            assert pending[0]["reward"]["name"] == "Choose dessert"
+
+            approve_resp = await client.post(
+                f"/api/v1/rewards/redemptions/{redemption['id']}/approve",
+                headers=parent_headers,
+            )
+            assert approve_resp.status_code == 200
+            assert approve_resp.json()["status"] == "approved"
+
+            fulfill_resp = await client.post(
+                f"/api/v1/rewards/redemptions/{redemption['id']}/fulfill",
+                json={"notes": "Delivered after dinner"},
+                headers=parent_headers,
+            )
+            assert fulfill_resp.status_code == 200
+            fulfilled = fulfill_resp.json()
+            assert fulfilled["status"] == "fulfilled"
+            assert fulfilled["notes"] == "Delivered after dinner"
+        finally:
+            await client.aclose()
+
 
 class TestFamilyGoals:
     async def test_create_and_list_goals(self):

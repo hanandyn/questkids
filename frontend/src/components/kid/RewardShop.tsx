@@ -55,7 +55,10 @@ export function RewardShop({ onClose }: { onClose?: () => void }) {
     } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
+  }, [loadData]);
 
   const handleRedeem = async (reward: Reward) => {
     try {

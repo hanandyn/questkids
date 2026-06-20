@@ -180,6 +180,28 @@ async def update_task_template(
     return TaskTemplateResponse.model_validate(template)
 
 
+@router.delete("/instances/orphaned")
+async def delete_orphaned_instances(
+    current_user: User = Depends(get_current_parent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete pending instances whose template has been deactivated (deleted)."""
+    result = await db.execute(
+        select(TaskInstance)
+        .join(TaskTemplate, TaskInstance.template_id == TaskTemplate.id)
+        .where(
+            TaskInstance.status == "pending",
+            TaskTemplate.is_active == False,
+            TaskTemplate.family_id == current_user.family_id,
+        )
+    )
+    orphaned = result.scalars().all()
+    for inst in orphaned:
+        await db.delete(inst)
+    await db.commit()
+    return {"message": "Orphaned instances removed", "count": len(orphaned)}
+
+
 @router.get("/instances", response_model=list[TaskInstanceResponse])
 async def get_task_instances(
     current_user: User = Depends(get_current_user),

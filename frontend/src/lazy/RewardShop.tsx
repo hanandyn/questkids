@@ -1,0 +1,1 @@
+export { RewardShop as default } from '../components/kid/RewardShop';

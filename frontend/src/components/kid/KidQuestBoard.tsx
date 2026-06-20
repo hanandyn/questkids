@@ -16,6 +16,7 @@ import { FamilyGoalKidCard } from './FamilyGoals';
 import { KidWeeklyRecap } from './WeeklyRecap';
 import { CheerNotification } from './CheerSystem';
 import { PowerUpShop } from './PowerUpShop';
+import { RewardShop } from './RewardShop';
 import { SchoolQuests } from './SchoolQuests';
 import { SeasonalBanner } from './SeasonalBanner';
 import { SettingsPanel } from '../settings/SettingsPanel';
@@ -40,7 +41,7 @@ export function KidQuestBoard() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [instances, setInstances] = useState<TaskInstance[]>([]);
-  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [, setRewards] = useState<Reward[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('quests');
   const [activeTimer, setActiveTimer] = useState<TaskInstance | null>(null);
   const [message, setMessage] = useState('');
@@ -187,23 +188,6 @@ export function KidQuestBoard() {
       await api.undoTask(instance.id);
       setMessage('↩️ Task undone — points returned!');
       setTimeout(() => setMessage(''), 3000);
-      loadData();
-    } catch (err: unknown) {
-      showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
-    }
-  };
-
-  const handleRedeemReward = async (reward: Reward) => {
-    if (!user) return;
-    audio.playButtonClick();
-    if (reward.cost_stars > user.stars) {
-      showMessage('Not enough stars! Keep questing! ⭐', 'info');
-      return;
-    }
-    try {
-      await api.redeemReward(reward.id);
-      audio.playPointsEarned();
-      showMessage(`Redeemed: ${reward.name}! 🎁`, 'success');
       loadData();
     } catch (err: unknown) {
       showMessage(err instanceof Error ? err.message : 'Something went wrong', 'info');
@@ -581,61 +565,7 @@ export function KidQuestBoard() {
 
         {/* Reward Shop View */}
         {activeView === 'shop' && (
-          <div>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              🛒 Reward Shop
-              <span className="text-base font-normal text-gray-500">
-                (Balance: ⭐{user?.stars} 💎{user?.gems})
-              </span>
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rewards.map(reward => (
-                <motion.div
-                  key={reward.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.03 }}
-                  className={`card-kid bg-gradient-to-br from-yellow-50 to-amber-50 ${
-                    user && reward.cost_stars > user.stars ? 'opacity-50' : ''
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="text-4xl mb-2">
-                      {reward.category === 'digital_fun' ? '📱' :
-                       reward.category === 'food' ? '🍕' :
-                       reward.category === 'privileges' ? '⭐' :
-                       reward.category === 'experiences' ? '🎯' : '🎁'}
-                    </div>
-                    <h3 className="font-bold text-lg">{reward.name}</h3>
-                    {reward.description && (
-                      <p className="text-sm text-gray-500">{reward.description}</p>
-                    )}
-                    <div className="flex justify-center gap-3 mt-3">
-                      {reward.cost_stars > 0 && (
-                        <span className="bg-yellow-100 px-3 py-1 rounded-full text-sm font-bold">⭐ {reward.cost_stars}</span>
-                      )}
-                      {reward.cost_gems > 0 && (
-                        <span className="bg-cyan-100 px-3 py-1 rounded-full text-sm font-bold">💎 {reward.cost_gems}</span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleRedeemReward(reward)}
-                      disabled={!!(user && reward.cost_stars > user.stars)}
-                      className="btn-gold mt-3 w-full"
-                    >
-                      🎁 Redeem
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-              {rewards.length === 0 && (
-                <div className="col-span-full text-center py-12 text-gray-400">
-                  <div className="text-5xl mb-4">🛒</div>
-                  <p>No rewards yet. Ask a parent to add some!</p>
-                </div>
-              )}
-            </div>
-          </div>
+          <RewardShop />
         )}
 
         {/* Power-Ups Shop View */}

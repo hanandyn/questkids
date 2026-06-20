@@ -273,6 +273,10 @@ export const api = {
   fulfillRedemption: (id: number, notes?: string) => apiFetch(`/rewards/redemptions/${id}/fulfill`, { method: 'POST', body: JSON.stringify({ notes }) }),
   cancelRedemption: (id: number) => apiFetch(`/rewards/redemptions/${id}/cancel`, { method: 'POST' }),
   getPendingRedemptions: () => apiFetch('/rewards/redemptions/pending'),
+  // Reward Requests (kid asks parent for new rewards)
+  createRewardRequest: (data: JSONData) => apiFetch('/rewards/requests', { method: 'POST', body: JSON.stringify(data) }),
+  getRewardRequests: () => apiFetch('/rewards/requests'),
+  resolveRewardRequest: (id: number, data: JSONData) => apiFetch(`/rewards/requests/${id}/resolve`, { method: 'POST', body: JSON.stringify(data) }),
 
   // Phase 10: GDPR Privacy
   getDataSummary: () => apiFetch('/user/data-summary'),

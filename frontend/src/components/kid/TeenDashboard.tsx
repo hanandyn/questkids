@@ -6,9 +6,10 @@ import type { TaskInstance, KidRecap, AllowanceStatus } from '../../lib/types';
 import { CountdownTimer } from '../timer/CountdownTimer';
 import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
 import { KidDailyRecap } from './KidDailyRecap';
+import { RewardShop } from './RewardShop';
 import * as audio from '../../lib/audio';
 
-type ViewType = 'tasks' | 'calendar' | 'stats' | 'allowance' | 'settings';
+type ViewType = 'tasks' | 'calendar' | 'stats' | 'allowance' | 'shop' | 'settings';
 
 const ACCENT_COLORS = ['#06b6d4', '#8b5cf6', '#f43f5e', '#10b981', '#f59e0b', '#3b82f6'];
 
@@ -204,6 +205,7 @@ export function TeenDashboard() {
             { key: 'calendar' as const, label: '📅 Calendar' },
             { key: 'stats' as const, label: '📊 Stats' },
             { key: 'allowance' as const, label: '💰 Money' },
+            { key: 'shop' as const, label: '🎁 Shop' },
             { key: 'settings' as const, label: '⚙️ Settings' },
           ]).map(({ key, label }) => (
             <button
@@ -489,6 +491,9 @@ export function TeenDashboard() {
             )}
           </motion.div>
         )}
+
+        {/* Shop View */}
+        {activeView === 'shop' && <RewardShop />}
 
         {/* Settings View */}
         {activeView === 'settings' && (

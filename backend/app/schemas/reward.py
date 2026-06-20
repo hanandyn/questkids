@@ -51,3 +51,33 @@ class RedemptionResponse(BaseModel):
     reward: Optional[RewardResponse] = None
 
     model_config = {"from_attributes": True}
+
+
+class RewardRequestCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    suggested_cost_stars: int = 0
+    category: Optional[str] = None
+
+
+class RewardRequestResponse(BaseModel):
+    id: int
+    family_id: int
+    child_id: int
+    name: str
+    description: Optional[str] = None
+    suggested_cost_stars: int
+    category: Optional[str] = None
+    status: str
+    parent_notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class RewardRequestResolve(BaseModel):
+    approved: bool
+    cost_stars: int = 0
+    cost_gems: int = 0
+    notes: Optional[str] = None

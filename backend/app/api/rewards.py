@@ -10,7 +10,8 @@ from ..core.database import get_db
 from ..core.auth import get_current_user, get_current_parent
 from ..models.user import User
 from ..models.reward import Reward, RewardRedemption
-from ..schemas.reward import RewardCreate, RewardResponse, RedemptionResponse
+from ..models.reward_request import RewardRequest
+from ..schemas.reward import RewardCreate, RewardResponse, RedemptionResponse, RewardRequestCreate, RewardRequestResponse, RewardRequestResolve
 
 router = APIRouter(prefix="/rewards", tags=["rewards"])
 
@@ -154,6 +155,84 @@ async def get_redemptions(
     return [RedemptionResponse.model_validate(r) for r in redemptions]
 
 
+@router.post("/requests", response_model=RewardRequestResponse)
+async def create_reward_request(
+    data: RewardRequestCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """A child requests a new reward to be added to the shop."""
+    if current_user.role != "child":
+        raise HTTPException(status_code=403, detail="Only children can request rewards")
+    request = RewardRequest(
+        family_id=current_user.family_id,
+        child_id=current_user.id,
+        name=data.name,
+        description=data.description,
+        suggested_cost_stars=data.suggested_cost_stars,
+        category=data.category,
+    )
+    db.add(request)
+    await db.commit()
+    await db.refresh(request)
+    return RewardRequestResponse.model_validate(request)
+
+
+@router.get("/requests", response_model=list[RewardRequestResponse])
+async def get_reward_requests(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get reward requests. Parents see all; children see their own."""
+    if current_user.role == "parent":
+        query = select(RewardRequest).where(RewardRequest.family_id == current_user.family_id)
+    else:
+        query = select(RewardRequest).where(RewardRequest.child_id == current_user.id)
+    result = await db.execute(query.order_by(RewardRequest.created_at.desc()))
+    return [RewardRequestResponse.model_validate(r) for r in result.scalars().all()]
+
+
+@router.post("/requests/{request_id}/resolve", response_model=RewardRequestResponse)
+async def resolve_reward_request(
+    request_id: int,
+    data: RewardRequestResolve,
+    current_user: User = Depends(get_current_parent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Parent approves (creates reward) or rejects a reward request."""
+    from datetime import datetime, timezone
+    result = await db.execute(
+        select(RewardRequest).where(
+            and_(RewardRequest.id == request_id, RewardRequest.family_id == current_user.family_id)
+        )
+    )
+    req = result.scalar_one_or_none()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if req.status != "pending":
+        raise HTTPException(status_code=400, detail="Already resolved")
+
+    if data.approved:
+        # Create the reward in the shop
+        reward = Reward(
+            family_id=current_user.family_id,
+            created_by_id=current_user.id,
+            name=req.name,
+            description=req.description,
+            category=req.category,
+            cost_stars=data.cost_stars,
+            cost_gems=data.cost_gems,
+        )
+        db.add(reward)
+        req.status = "approved"
+    else:
+        req.status = "rejected"
+
+    req.parent_notes = data.notes
+    req.resolved_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(req)
+    return RewardRequestResponse.model_validate(req)
 @router.post("/redemptions/{redemption_id}/approve", response_model=RedemptionResponse)
 async def approve_redemption(
     redemption_id: int,

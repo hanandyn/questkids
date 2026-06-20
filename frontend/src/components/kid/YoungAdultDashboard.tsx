@@ -5,9 +5,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { TaskInstance, KidRecap, AllowanceStatus, WeeklyRecap } from '../../lib/types';
 import { CountdownTimer } from '../timer/CountdownTimer';
 import { KidDailyRecap } from './KidDailyRecap';
+import { RewardShop } from './RewardShop';
 import * as audio from '../../lib/audio';
 
-type ViewType = 'today' | 'habits' | 'money' | 'goals' | 'insights';
+type ViewType = 'today' | 'habits' | 'money' | 'goals' | 'insights' | 'shop';
 
 /**
  * Tier 5: Young Adult Dashboard (Ages 16–18)
@@ -222,6 +223,7 @@ export function YoungAdultDashboard() {
             { key: 'money' as const, label: 'Finance' },
             { key: 'goals' as const, label: 'Goals' },
             { key: 'insights' as const, label: 'Insights' },
+            { key: 'shop' as const, label: '🎁 Shop' },
           ]).map(({ key, label }) => (
             <button
               key={key}
@@ -657,6 +659,10 @@ export function YoungAdultDashboard() {
               </button>
             </div>
           </motion.div>
+        )}
+        {/* ── Shop View ── */}
+        {activeView === 'shop' && (
+          <RewardShop />
         )}
       </main>
 

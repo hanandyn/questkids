@@ -32,6 +32,7 @@ export function ParentDashboard() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddReward, setShowAddReward] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
+  const [rewardRequests, setRewardRequests] = useState<Array<{ id: number; name: string; description?: string; suggested_cost_stars: number; category?: string; status: string; child_id: number }>>([]);
 
   // Child form
   const [childName, setChildName] = useState('');
@@ -62,14 +63,16 @@ export function ParentDashboard() {
 
   const loadData = async () => {
     try {
-      const [c, t, r] = await Promise.all([
+      const [c, t, r, rr] = await Promise.all([
         api.getChildren(),
         api.getTemplates(),
         api.getRewards(),
+        api.getRewardRequests().catch(() => []),
       ]);
       setChildren(c as unknown as User[]);
       setTemplates(t as unknown as TaskTemplate[]);
       setRewards(r as unknown as Reward[]);
+      setRewardRequests(rr as unknown as typeof rewardRequests);
     } catch (e) {
       console.error(e);
     }
@@ -164,6 +167,14 @@ export function ParentDashboard() {
     try {
       const result = await api.cleanOrphanedInstances() as unknown as { count: number };
       setMessage(`Cleaned ${result.count} orphaned task(s) 🧹`);
+      loadData();
+    } catch (err: unknown) { setMessage(err instanceof Error ? err.message : 'Error'); }
+  };
+
+  const handleResolveRequest = async (id: number, approved: boolean, stars: number) => {
+    try {
+      await api.resolveRewardRequest(id, { approved, cost_stars: stars, cost_gems: 0 });
+      setMessage(approved ? 'Reward added to shop! ✅' : 'Request rejected');
       loadData();
     } catch (err: unknown) { setMessage(err instanceof Error ? err.message : 'Error'); }
   };
@@ -570,6 +581,46 @@ export function ParentDashboard() {
                   </form>
                 </div>
               </motion.div>
+            )}
+
+            {/* Kid Reward Requests */}
+            {rewardRequests.filter(r => r.status === 'pending').length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold mb-3">💌 Reward Requests from Kids</h3>
+                <div className="space-y-2">
+                  {rewardRequests.filter(r => r.status === 'pending').map(req => {
+                    const child = children.find(c => c.id === req.child_id);
+                    return (
+                      <div key={req.id} className="card-quest bg-gradient-to-br from-purple-50 to-pink-50">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h4 className="font-bold">{req.name}</h4>
+                            {req.description && <p className="text-sm text-gray-500">{req.description}</p>}
+                            <p className="text-xs text-gray-400 mt-1">
+                              💡 Suggested: {req.suggested_cost_stars} ⭐
+                              {child && <span> · from {child.display_name}</span>}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => handleResolveRequest(req.id, true, req.suggested_cost_stars)}
+                              className="px-3 py-1.5 rounded-lg bg-green-500 text-white text-sm font-medium hover:bg-green-600"
+                            >
+                              ✅ Add to Shop
+                            </button>
+                            <button
+                              onClick={() => handleResolveRequest(req.id, false, 0)}
+                              className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-300"
+                            >
+                              ❌ Decline
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
         )}

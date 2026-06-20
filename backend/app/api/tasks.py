@@ -3,7 +3,7 @@
 import os
 from typing import Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -80,6 +80,49 @@ def _apply_default_visuals(data: dict) -> dict:
     return data
 
 
+async def _get_family_child_ids(db: AsyncSession, family_id: int) -> list[int]:
+    result = await db.execute(
+        select(User.id).where(User.family_id == family_id, User.role == "child")
+    )
+    return list(result.scalars().all())
+
+
+async def _sync_today_pending_instances(
+    db: AsyncSession,
+    template: TaskTemplate,
+    child_ids: list[int] | None,
+):
+    """Ensure today's pending task instances match current template assignment."""
+    eligible_child_ids = set(child_ids if child_ids is not None else await _get_family_child_ids(db, template.family_id))
+    today = datetime.now(timezone.utc).date()
+    tomorrow = today + timedelta(days=1)
+
+    existing_result = await db.execute(
+        select(TaskInstance).where(
+            TaskInstance.template_id == template.id,
+            TaskInstance.status == "pending",
+            TaskInstance.date >= today.isoformat(),
+            TaskInstance.date < tomorrow.isoformat(),
+        )
+    )
+    existing = existing_result.scalars().all()
+
+    existing_child_ids = set()
+    for inst in existing:
+        if inst.child_id in eligible_child_ids:
+            existing_child_ids.add(inst.child_id)
+        else:
+            await db.delete(inst)
+
+    for child_id in eligible_child_ids - existing_child_ids:
+        db.add(TaskInstance(
+            template_id=template.id,
+            child_id=child_id,
+            date=datetime.now(timezone.utc),
+            status="pending",
+        ))
+
+
 @router.post("/templates", response_model=TaskTemplateResponse)
 async def create_task_template(
     data: TaskTemplateCreate,
@@ -100,18 +143,8 @@ async def create_task_template(
     await db.commit()
     await db.refresh(template)
 
-    # If child IDs provided, generate today's instances for those children
-    if data.assigned_child_ids:
-        today = datetime.now(timezone.utc)
-        for child_id in data.assigned_child_ids:
-            instance = TaskInstance(
-                template_id=template.id,
-                child_id=child_id,
-                date=today,
-                status="pending",
-            )
-            db.add(instance)
-        await db.commit()
+    await _sync_today_pending_instances(db, template, data.assigned_child_ids)
+    await db.commit()
 
     return TaskTemplateResponse.model_validate(template)
 
@@ -221,23 +254,11 @@ async def update_task_template(
         if not merged["image_url"]:
             update_data["image_url"] = image_url
 
-    # If assigned_kids changed, clean up instances for removed kids
-    if "assigned_kids" in update_data:
-        new_kids = set(update_data["assigned_kids"] or [])
-        # Delete pending instances for kids no longer assigned
-        pending_result = await db.execute(
-            select(TaskInstance).where(
-                TaskInstance.template_id == template_id,
-                TaskInstance.status == "pending",
-            )
-        )
-        pending = pending_result.scalars().all()
-        for inst in pending:
-            if inst.child_id not in new_kids:
-                await db.delete(inst)
-
     for field, value in update_data.items():
         setattr(template, field, value)
+
+    if "assigned_kids" in update_data:
+        await _sync_today_pending_instances(db, template, update_data["assigned_kids"])
 
     await db.commit()
     await db.refresh(template)
@@ -657,38 +678,8 @@ async def assign_template_to_children(
         if len(children) != len(data.child_ids):
             raise HTTPException(status_code=400, detail="Some child IDs are invalid or not in your family")
 
-    # Delete future pending instances for kids no longer assigned
-    # and create instances for newly assigned kids
-    from datetime import date, datetime, timezone
-    today = date.today()
-    tomorrow = (today.isoformat(), (today.replace(day=today.day + 1) if today.day < 28 else today.isoformat()))
-
-    # Get all future pending instances for this template
-    existing_result = await db.execute(
-        select(TaskInstance).where(
-            TaskInstance.template_id == template_id,
-            TaskInstance.status == "pending",
-            TaskInstance.date >= today.isoformat(),
-        )
-    )
-    existing_instances = existing_result.scalars().all()
-
-    # Remove instances for unassigned kids
-    for inst in existing_instances:
-        if inst.child_id not in data.child_ids:
-            await db.delete(inst)
-
-    # Create instances for newly assigned kids (for today)
-    existing_child_ids = {inst.child_id for inst in existing_instances}
-    for child_id in data.child_ids:
-        if child_id not in existing_child_ids:
-            instance = TaskInstance(
-                template_id=template_id,
-                child_id=child_id,
-                date=datetime.now(timezone.utc),
-                status="pending",
-            )
-            db.add(instance)
+    template.assigned_kids = data.child_ids or None
+    await _sync_today_pending_instances(db, template, template.assigned_kids)
 
     await db.commit()
     await db.refresh(template)

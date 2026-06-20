@@ -261,6 +261,100 @@ class TestTasks:
         finally:
             await client.aclose()
 
+    async def test_create_template_for_all_kids_generates_instances(self):
+        client = make_client()
+        try:
+            reg = await client.post("/api/v1/auth/register-parent", json={
+                "username": "allkidsparent",
+                "display_name": "All Kids Parent",
+                "password": "Secret123",
+                "role": "parent",
+            })
+            token = reg.json()["access_token"]
+            parent_headers = {"Authorization": f"Bearer {token}"}
+
+            for username in ("allkid1", "allkid2"):
+                resp = await client.post("/api/v1/auth/create-child", json={
+                    "username": username,
+                    "display_name": username,
+                    "password": "Kid1234",
+                    "role": "child",
+                    "age_tier": 2,
+                }, headers=parent_headers)
+                assert resp.status_code == 200
+
+            create = await client.post("/api/v1/tasks/templates", json={
+                "name": "Clean room",
+                "task_type": "one_shot",
+                "base_points": 20,
+                "assigned_child_ids": None,
+            }, headers=parent_headers)
+            assert create.status_code == 200
+
+            all_instances = await client.get("/api/v1/tasks/all-instances", headers=parent_headers)
+            assert all_instances.status_code == 200
+            instances = all_instances.json()
+            assert len(instances) == 2
+            assert {i["template"]["name"] for i in instances} == {"Clean room"}
+
+            kid_login = await client.post("/api/v1/auth/login", json={
+                "username": "allkid1",
+                "password": "Kid1234",
+            })
+            kid_headers = {"Authorization": f"Bearer {kid_login.json()['access_token']}"}
+            kid_instances = await client.get("/api/v1/tasks/instances", headers=kid_headers)
+            assert kid_instances.status_code == 200
+            assert len(kid_instances.json()) == 1
+        finally:
+            await client.aclose()
+
+    async def test_edit_all_kids_template_to_specific_kid_creates_instance(self):
+        client = make_client()
+        try:
+            reg = await client.post("/api/v1/auth/register-parent", json={
+                "username": "editassignparent",
+                "display_name": "Edit Assign Parent",
+                "password": "Secret123",
+                "role": "parent",
+            })
+            token = reg.json()["access_token"]
+            parent_headers = {"Authorization": f"Bearer {token}"}
+
+            create = await client.post("/api/v1/tasks/templates", json={
+                "name": "Empty trash",
+                "task_type": "one_shot",
+                "base_points": 15,
+                "assigned_child_ids": None,
+            }, headers=parent_headers)
+            template_id = create.json()["id"]
+
+            child_resp = await client.post("/api/v1/auth/create-child", json={
+                "username": "editassignkid",
+                "display_name": "Edit Assign Kid",
+                "password": "Kid1234",
+                "role": "child",
+                "age_tier": 2,
+            }, headers=parent_headers)
+            child_id = child_resp.json()["id"]
+
+            patch = await client.patch(f"/api/v1/tasks/templates/{template_id}", json={
+                "assigned_kids": [child_id],
+            }, headers=parent_headers)
+            assert patch.status_code == 200
+
+            kid_login = await client.post("/api/v1/auth/login", json={
+                "username": "editassignkid",
+                "password": "Kid1234",
+            })
+            kid_headers = {"Authorization": f"Bearer {kid_login.json()['access_token']}"}
+            kid_instances = await client.get("/api/v1/tasks/instances", headers=kid_headers)
+            assert kid_instances.status_code == 200
+            instances = kid_instances.json()
+            assert len(instances) == 1
+            assert instances[0]["template"]["name"] == "Empty trash"
+        finally:
+            await client.aclose()
+
 
 class TestRewards:
     async def test_reward_flow(self):

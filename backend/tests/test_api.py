@@ -167,6 +167,43 @@ class TestTasks:
         finally:
             await client.aclose()
 
+    async def test_task_template_visual_defaults_and_upload(self):
+        client = make_client()
+        try:
+            reg = await client.post("/api/v1/auth/register-parent", json={
+                "username": "visualparent",
+                "display_name": "Visual Parent",
+                "password": "Secret123",
+                "role": "parent",
+            })
+            token = reg.json()["access_token"]
+            headers = {"Authorization": f"Bearer {token}"}
+
+            resp = await client.post("/api/v1/tasks/templates", json={
+                "name": "Brush teeth",
+                "task_type": "timed",
+                "base_points": 10,
+                "timer_duration": 120,
+            }, headers=headers)
+            assert resp.status_code == 200
+            template = resp.json()
+            assert template["icon"] == "🪥"
+            assert template["image_url"] == "/task-images/brush-teeth.svg"
+
+            upload = await client.post(
+                f"/api/v1/tasks/templates/{template['id']}/image",
+                headers=headers,
+                files={"file": ("task.svg", b"<svg xmlns='http://www.w3.org/2000/svg'></svg>", "image/svg+xml")},
+            )
+            assert upload.status_code == 200
+            uploaded = upload.json()
+            assert uploaded["image_url"].startswith("/api/v1/tasks/template-images/template_")
+
+            image = await client.get(uploaded["image_url"])
+            assert image.status_code == 200
+        finally:
+            await client.aclose()
+
     async def test_complete_task_flow(self):
         client = make_client()
         try:

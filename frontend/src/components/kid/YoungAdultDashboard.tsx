@@ -6,6 +6,7 @@ import type { TaskInstance, KidRecap, AllowanceStatus, WeeklyRecap } from '../..
 import { CountdownTimer } from '../timer/CountdownTimer';
 import { KidDailyRecap } from './KidDailyRecap';
 import { RewardShop } from './RewardShop';
+import { TaskVisual } from '../shared/TaskVisual';
 import * as audio from '../../lib/audio';
 
 type ViewType = 'today' | 'habits' | 'money' | 'goals' | 'insights' | 'shop';
@@ -270,12 +271,7 @@ export function YoungAdultDashboard() {
                       className="group flex items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-900/40 border border-slate-800/40 hover:border-slate-700/60 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base bg-slate-800/60 flex-shrink-0">
-                          {inst.template?.category === 'chores' ? '🏠' :
-                           inst.template?.category === 'homework' ? '📚' :
-                           inst.template?.category === 'exercise' ? '🏃' :
-                           inst.template?.category === 'behavior' ? '🤝' : '📋'}
-                        </div>
+                        <TaskVisual template={inst.template} size="sm" className="bg-slate-800/60 flex-shrink-0" />
                         <div className="min-w-0">
                           <p className="font-medium text-sm text-slate-200 truncate">{inst.template?.name || 'Task'}</p>
                           <p className="text-xs text-slate-500">

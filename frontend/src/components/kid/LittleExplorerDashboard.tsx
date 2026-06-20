@@ -7,6 +7,7 @@ import type { Tier1Task, PetState } from '../../lib/types';
 import { useVoicePrompt } from './useVoicePrompt';
 import { VoiceSettings } from './VoiceSettings';
 import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
+import { TaskVisual } from '../shared/TaskVisual';
 
 /**
  * Little Explorers Dashboard — for ages 3-5
@@ -380,16 +381,15 @@ export function LittleExplorerDashboard() {
                   `}
                   aria-label={`Complete ${task.audio_prompt}`}
                 >
-                  {/* Task icon — huge for little fingers */}
+                  {/* Task picture — huge for little fingers */}
                   <motion.div
-                    className="text-6xl"
                     animate={{
                       y: [0, -8, 0],
                       rotate: [0, 5, 0, -5, 0],
                     }}
                     transition={{ duration: 2, delay: i * 0.2, repeat: Infinity }}
                   >
-                    {task.icon}
+                    <TaskVisual icon={task.icon} imageUrl={task.image_url} size="xl" className="bg-white/90" />
                   </motion.div>
 
                   {/* Points badge */}
@@ -437,7 +437,11 @@ export function LittleExplorerDashboard() {
                   transition={{ delay: i * 0.1, type: 'spring' }}
                   className="text-3xl bg-white/20 rounded-2xl p-3"
                 >
-                  {sticker.icon}
+                  {sticker.image_url ? (
+                    <img src={sticker.image_url} alt="" className="w-8 h-8 object-contain" />
+                  ) : (
+                    sticker.icon
+                  )}
                 </motion.div>
               ))}
             </div>

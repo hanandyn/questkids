@@ -7,6 +7,7 @@ import { CountdownTimer } from '../timer/CountdownTimer';
 import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
 import { KidDailyRecap } from './KidDailyRecap';
 import { RewardShop } from './RewardShop';
+import { TaskVisual } from '../shared/TaskVisual';
 import * as audio from '../../lib/audio';
 
 type ViewType = 'tasks' | 'calendar' | 'stats' | 'allowance' | 'shop' | 'settings';
@@ -266,11 +267,7 @@ export function TeenDashboard() {
                         className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center justify-between hover:border-gray-700 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-gray-800">
-                            {inst.template?.category === 'chores' ? '🏠' :
-                             inst.template?.category === 'homework' ? '📚' :
-                             inst.template?.category === 'exercise' ? '🏃' : '⭐'}
-                          </div>
+                          <TaskVisual template={inst.template} size="md" className="bg-gray-800" />
                           <div>
                             <h3 className="font-medium">{inst.template?.name || 'Task'}</h3>
                             <p className="text-xs text-gray-500">

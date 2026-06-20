@@ -21,6 +21,8 @@ import { KidCredentialsPanel } from './KidCredentialsPanel';
 import { ParentTaskManagement } from './ParentTaskManagement';
 import { NLTaskCreator } from './NLTaskCreator';
 import { PhotoApprovalQueue } from './PhotoApprovalQueue';
+import { TaskVisual } from '../shared/TaskVisual';
+import { DEFAULT_TASK_IMAGES, inferTaskVisual } from '../../lib/taskVisuals';
 
 type RewardRequest = {
   id: number;
@@ -60,6 +62,10 @@ export function ParentDashboard() {
   const penaltyPerAsk = 5;
   const [scheduleType, setScheduleType] = useState('daily');
   const [taskAssignKids, setTaskAssignKids] = useState<number[]>([]);
+  const [taskIcon, setTaskIcon] = useState('');
+  const [taskImageUrl, setTaskImageUrl] = useState('');
+  const [taskImageFile, setTaskImageFile] = useState<File | null>(null);
+  const [taskImagePreview, setTaskImagePreview] = useState('');
 
   // Reward form
   const [rewardName, setRewardName] = useState('');
@@ -113,7 +119,7 @@ export function ParentDashboard() {
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.createTemplate({
+      const created = await api.createTemplate({
         name: taskName,
         task_type: taskType,
         base_points: basePoints,
@@ -124,8 +130,12 @@ export function ParentDashboard() {
         overstay_penalty_per_min: Math.abs(5),
         schedule_type: scheduleType,
         assigned_child_ids: taskAssignKids.length > 0 ? taskAssignKids : null,
-      });
+        icon: taskIcon || undefined,
+        image_url: taskImageUrl || undefined,
+      }) as unknown as TaskTemplate;
+      if (taskImageFile) await api.uploadTemplateImage(created.id, taskImageFile);
       setShowAddTask(false);
+      setTaskName(''); setTaskAssignKids([]); setTaskIcon(''); setTaskImageUrl(''); handleTaskImageFile(null);
       setMessage('Task template created! ✅');
       loadData();
     } catch (err: unknown) { setMessage(err instanceof Error ? err.message : 'Something went wrong'); }
@@ -167,9 +177,12 @@ export function ParentDashboard() {
         max_asks: maxAsks,
         schedule_type: scheduleType,
         assigned_kids: taskAssignKids.length > 0 ? taskAssignKids : null,
+        icon: taskIcon || undefined,
+        image_url: taskImageUrl || undefined,
       });
+      if (taskImageFile) await api.uploadTemplateImage(editingTemplate.id, taskImageFile);
       setEditingTemplate(null);
-      setTaskName(''); setTaskAssignKids([]);
+      setTaskName(''); setTaskAssignKids([]); setTaskIcon(''); setTaskImageUrl(''); handleTaskImageFile(null);
       setMessage('Task updated! ✅');
       loadData();
     } catch (err: unknown) { setMessage(err instanceof Error ? err.message : 'Something went wrong'); }
@@ -199,7 +212,24 @@ export function ParentDashboard() {
     setTimerDuration(tpl.timer_duration || 600);
     setMaxAsks(tpl.max_asks);
     setScheduleType(tpl.schedule_type);
+    setTaskIcon(tpl.icon || '');
+    setTaskImageUrl(tpl.image_url || '');
+    handleTaskImageFile(null);
     setTaskAssignKids((tpl as unknown as { assigned_kids?: number[] }).assigned_kids || []);
+  };
+
+  const handleTaskImageFile = (file: File | null) => {
+    if (taskImagePreview) URL.revokeObjectURL(taskImagePreview);
+    setTaskImageFile(file);
+    setTaskImagePreview(file ? URL.createObjectURL(file) : '');
+  };
+
+  const taskPreview = {
+    name: taskName,
+    category: '',
+    task_type: taskType as TaskTemplate['task_type'],
+    icon: taskIcon || inferTaskVisual(taskName).icon,
+    image_url: taskImagePreview || taskImageUrl || inferTaskVisual(taskName).imageUrl,
   };
 
   const handleDeleteReward = async (id: number) => {
@@ -355,8 +385,10 @@ export function ParentDashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   className="card-quest flex items-center justify-between"
                 >
-                  <div>
-                    <h3 className="font-bold text-lg">{tpl.name}</h3>
+                  <div className="flex items-center gap-3">
+                    <TaskVisual template={tpl} size="lg" className="border border-gray-100 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-bold text-lg">{tpl.name}</h3>
                     <div className="text-sm text-gray-500 flex gap-3 flex-wrap">
                       <span>{tpl.task_type}</span>
                       <span>⭐ {tpl.base_points} pts</span>
@@ -365,6 +397,7 @@ export function ParentDashboard() {
                       {assignedNames.length > 0
                         ? <span className="text-blue-500">👤 {assignedNames.join(', ')}</span>
                         : <span className="text-gray-400">👤 All kids</span>}
+                    </div>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -398,6 +431,33 @@ export function ParentDashboard() {
                   <h3 className="text-xl font-bold mb-4">Create Task Template</h3>
                   <form onSubmit={handleAddTask} className="space-y-3">
                     <input type="text" value={taskName} onChange={e => setTaskName(e.target.value)} placeholder="Task name (e.g. Shower Time 🚿)" className="w-full px-4 py-3 rounded-xl border-2 border-gray-200" required />
+                    <div className="rounded-2xl border-2 border-gray-100 p-3 bg-gray-50">
+                      <label className="text-xs text-gray-500 mb-2 block">Task picture for kids</label>
+                      <div className="flex gap-3 items-start">
+                        <TaskVisual template={taskPreview} size="xl" className="border-2 border-white flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-3">
+                            {DEFAULT_TASK_IMAGES.map(item => (
+                              <button
+                                key={item.imageUrl}
+                                type="button"
+                                onClick={() => { setTaskIcon(item.icon); setTaskImageUrl(item.imageUrl); handleTaskImageFile(null); }}
+                                className={`rounded-xl border-2 p-1.5 bg-white hover:border-quest-blue transition-colors ${taskImageUrl === item.imageUrl ? 'border-quest-blue' : 'border-gray-200'}`}
+                                title={item.label}
+                              >
+                                <img src={item.imageUrl} alt={item.label} className="w-10 h-10 object-contain mx-auto" />
+                              </button>
+                            ))}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                            onChange={e => handleTaskImageFile(e.target.files?.[0] || null)}
+                            className="block w-full text-xs text-gray-500 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-white file:text-quest-blue file:font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <select value={taskType} onChange={e => setTaskType(e.target.value)} className="px-4 py-3 rounded-xl border-2 border-gray-200">
                         <option value="one_shot">One Shot</option>
@@ -447,7 +507,7 @@ export function ParentDashboard() {
                     </div>
                     <div className="flex gap-3">
                       <button type="submit" className="btn-primary flex-1">Create Task</button>
-                      <button type="button" onClick={() => { setShowAddTask(false); setTaskAssignKids([]); }} className="btn-quest bg-gray-200">Cancel</button>
+                      <button type="button" onClick={() => { setShowAddTask(false); setTaskAssignKids([]); setTaskIcon(''); setTaskImageUrl(''); handleTaskImageFile(null); }} className="btn-quest bg-gray-200">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -461,6 +521,33 @@ export function ParentDashboard() {
                   <h3 className="text-xl font-bold mb-4">✏️ Edit Task Template</h3>
                   <form onSubmit={handleEditTemplate} className="space-y-3">
                     <input type="text" value={taskName} onChange={e => setTaskName(e.target.value)} placeholder="Task name" className="w-full px-4 py-3 rounded-xl border-2 border-gray-200" required />
+                    <div className="rounded-2xl border-2 border-gray-100 p-3 bg-gray-50">
+                      <label className="text-xs text-gray-500 mb-2 block">Task picture for kids</label>
+                      <div className="flex gap-3 items-start">
+                        <TaskVisual template={taskPreview} size="xl" className="border-2 border-white flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-3">
+                            {DEFAULT_TASK_IMAGES.map(item => (
+                              <button
+                                key={item.imageUrl}
+                                type="button"
+                                onClick={() => { setTaskIcon(item.icon); setTaskImageUrl(item.imageUrl); handleTaskImageFile(null); }}
+                                className={`rounded-xl border-2 p-1.5 bg-white hover:border-quest-blue transition-colors ${taskImageUrl === item.imageUrl ? 'border-quest-blue' : 'border-gray-200'}`}
+                                title={item.label}
+                              >
+                                <img src={item.imageUrl} alt={item.label} className="w-10 h-10 object-contain mx-auto" />
+                              </button>
+                            ))}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                            onChange={e => handleTaskImageFile(e.target.files?.[0] || null)}
+                            className="block w-full text-xs text-gray-500 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-white file:text-quest-blue file:font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <select value={taskType} onChange={e => setTaskType(e.target.value)} className="px-4 py-3 rounded-xl border-2 border-gray-200">
                         <option value="one_shot">One Shot</option>
@@ -509,7 +596,7 @@ export function ParentDashboard() {
                     </div>
                     <div className="flex gap-3">
                       <button type="submit" className="btn-primary flex-1">Save Changes</button>
-                      <button type="button" onClick={() => { setEditingTemplate(null); setTaskAssignKids([]); }} className="btn-quest bg-gray-200">Cancel</button>
+                      <button type="button" onClick={() => { setEditingTemplate(null); setTaskAssignKids([]); setTaskIcon(''); setTaskImageUrl(''); handleTaskImageFile(null); }} className="btn-quest bg-gray-200">Cancel</button>
                     </div>
                   </form>
                 </div>

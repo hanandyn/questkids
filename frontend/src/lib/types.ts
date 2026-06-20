@@ -49,6 +49,9 @@ export interface TaskTemplate {
   age_tier_max: number;
   requires_photo: boolean;
   requires_approval: boolean;
+  icon?: string;
+  image_url?: string;
+  audio_prompt?: string;
   is_active: boolean;
   // Phase 5: Marketplace
   public?: boolean;
@@ -69,6 +72,7 @@ export interface TaskInstance {
   bonus_points: number;
   penalty_points: number;
   template?: TaskTemplate;
+  photo_url?: string;
 }
 
 export interface Reward {
@@ -469,6 +473,7 @@ export interface Tier1Task {
   id: number;
   template_id: number;
   icon: string;
+  image_url?: string;
   audio_prompt: string;
   category: string;
   status: string;
@@ -500,7 +505,7 @@ export interface PetState {
     streak: number;
     tasks_completed_today: number;
   };
-  stickers: Array<{ icon: string; name: string }>;
+  stickers: Array<{ icon: string; image_url?: string; name: string }>;
   world_brightness: number;
 }
 

@@ -73,6 +73,7 @@ async def get_tier1_tasks(
             "id": inst.id,
             "template_id": tpl.id,
             "icon": icon,
+            "image_url": tpl.image_url,
             "audio_prompt": tpl.audio_prompt or f"Time to {tpl.name}!",
             "category": tpl.category or "task",
             "status": inst.status,
@@ -236,7 +237,7 @@ async def get_pet_state(
         tpl = inst.template
         if tpl:
             icon = tpl.icon or DEFAULT_ICONS.get(tpl.category, "⭐")
-            stickers.append({"icon": icon, "name": tpl.name})
+            stickers.append({"icon": icon, "image_url": tpl.image_url, "name": tpl.name})
 
     return {
         "pet": {

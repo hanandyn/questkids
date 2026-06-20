@@ -28,6 +28,57 @@ from ..services.streaks import update_streak_on_completion
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
+DEFAULT_TASK_VISUALS = [
+    (("brush", "teeth", "tooth"), "🪥", "/task-images/brush-teeth.svg"),
+    (("trash", "garbage", "bin"), "🗑️", "/task-images/empty-trash.svg"),
+    (("clean room", "tidy", "room"), "🧹", "/task-images/clean-room.svg"),
+    (("homework", "study", "math", "school"), "📚", "/task-images/homework.svg"),
+    (("shower", "bath"), "🚿", "/task-images/shower.svg"),
+    (("bed", "sleep"), "🛏️", "/task-images/make-bed.svg"),
+    (("dishes", "dishwasher", "plates"), "🍽️", "/task-images/dishes.svg"),
+    (("laundry", "clothes"), "🧺", "/task-images/laundry.svg"),
+    (("read", "book"), "📖", "/task-images/read-book.svg"),
+    (("dress", "clothes"), "👕", "/task-images/get-dressed.svg"),
+    (("pet", "feed dog", "feed cat"), "🐾", "/task-images/feed-pet.svg"),
+    (("table", "dinner"), "🍽️", "/task-images/set-table.svg"),
+]
+
+CATEGORY_TASK_VISUALS = {
+    "hygiene": ("🪥", "/task-images/brush-teeth.svg"),
+    "chores": ("🧹", "/task-images/clean-room.svg"),
+    "homework": ("📚", "/task-images/homework.svg"),
+    "school": ("📚", "/task-images/homework.svg"),
+    "learning": ("📖", "/task-images/read-book.svg"),
+    "reading": ("📖", "/task-images/read-book.svg"),
+    "exercise": ("🏃", "/task-images/exercise.svg"),
+    "health": ("🏃", "/task-images/exercise.svg"),
+    "self-care": ("👕", "/task-images/get-dressed.svg"),
+    "food": ("🍽️", "/task-images/set-table.svg"),
+    "pets": ("🐾", "/task-images/feed-pet.svg"),
+}
+
+
+def _infer_task_visual(name: str, category: str | None) -> tuple[str, str]:
+    """Pick a friendly default icon/image for common kid tasks."""
+    haystack = f"{name} {category or ''}".lower()
+    for keywords, icon, image_url in DEFAULT_TASK_VISUALS:
+        if any(keyword in haystack for keyword in keywords):
+            return icon, image_url
+    if category and category in CATEGORY_TASK_VISUALS:
+        return CATEGORY_TASK_VISUALS[category]
+    return "⭐", "/task-images/default-task.svg"
+
+
+def _apply_default_visuals(data: dict) -> dict:
+    if data.get("icon") and data.get("image_url"):
+        return data
+    icon, image_url = _infer_task_visual(data.get("name") or "", data.get("category"))
+    if not data.get("icon"):
+        data["icon"] = icon
+    if not data.get("image_url"):
+        data["image_url"] = image_url
+    return data
+
 
 @router.post("/templates", response_model=TaskTemplateResponse)
 async def create_task_template(
@@ -38,10 +89,11 @@ async def create_task_template(
     """Parent creates a task template."""
     # Store assigned_kids if provided (null = all kids)
     assigned_kids = data.assigned_child_ids
+    template_data = _apply_default_visuals(data.model_dump(exclude={"assigned_child_ids"}))
     template = TaskTemplate(
         family_id=current_user.family_id,
         created_by_id=current_user.id,
-        **data.model_dump(exclude={"assigned_child_ids"}),
+        **template_data,
         assigned_kids=assigned_kids,
     )
     db.add(template)
@@ -156,6 +208,18 @@ async def update_task_template(
         raise HTTPException(status_code=404, detail="Template not found")
 
     update_data = data.model_dump(exclude_unset=True)
+    if "name" in update_data or "category" in update_data:
+        merged = {
+            "name": update_data.get("name", template.name),
+            "category": update_data.get("category", template.category),
+            "icon": update_data.get("icon", template.icon),
+            "image_url": update_data.get("image_url", template.image_url),
+        }
+        icon, image_url = _infer_task_visual(merged["name"], merged["category"])
+        if not merged["icon"]:
+            update_data["icon"] = icon
+        if not merged["image_url"]:
+            update_data["image_url"] = image_url
 
     # If assigned_kids changed, clean up instances for removed kids
     if "assigned_kids" in update_data:
@@ -178,6 +242,58 @@ async def update_task_template(
     await db.commit()
     await db.refresh(template)
     return TaskTemplateResponse.model_validate(template)
+
+
+@router.post("/templates/{template_id}/image", response_model=TaskTemplateResponse)
+async def upload_template_image(
+    template_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_parent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Parent uploads a custom image for a task template."""
+    result = await db.execute(
+        select(TaskTemplate).where(
+            and_(TaskTemplate.id == template_id, TaskTemplate.family_id == current_user.family_id)
+        )
+    )
+    template = result.scalar_one_or_none()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+
+    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Use JPEG, PNG, WebP, GIF, or SVG.")
+
+    contents = await file.read()
+    if len(contents) > 2 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Task images must be 2MB or smaller.")
+
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    ext = file.filename.split(".")[-1].lower() if file.filename and "." in file.filename else "png"
+    if ext not in {"jpg", "jpeg", "png", "webp", "gif", "svg"}:
+        ext = "png"
+    unique_name = f"template_{template_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = os.path.join(settings.UPLOAD_DIR, unique_name)
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    template.image_url = f"/api/v1/tasks/template-images/{unique_name}"
+    await db.commit()
+    await db.refresh(template)
+    return TaskTemplateResponse.model_validate(template)
+
+
+@router.get("/template-images/{filename}")
+async def get_template_image(filename: str):
+    """Serve uploaded task template images for kid dashboards."""
+    safe_name = os.path.basename(filename)
+    if safe_name != filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    file_path = os.path.join(settings.UPLOAD_DIR, safe_name)
+    if not os.path.exists(file_path) or not safe_name.startswith("template_"):
+        raise HTTPException(status_code=404, detail="Image not found")
+    return FileResponse(file_path)
 
 
 @router.delete("/instances/orphaned")

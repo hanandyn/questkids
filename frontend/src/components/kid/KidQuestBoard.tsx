@@ -21,6 +21,7 @@ import { SchoolQuests } from './SchoolQuests';
 import { SeasonalBanner } from './SeasonalBanner';
 import { SettingsPanel } from '../settings/SettingsPanel';
 import { FamilyMessageBoard } from '../shared/FamilyMessageBoard';
+import { TaskVisual } from '../shared/TaskVisual';
 import { KidDailyRecap } from './KidDailyRecap';
 import heroImg from '../../assets/questkids-hero.jpg';
 import emptyImg from '../../assets/questkids-empty.jpg';
@@ -484,11 +485,7 @@ export function KidQuestBoard() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">
-                        {inst.template?.task_type === 'timed' ? '⏱️' :
-                         inst.template?.task_type === 'checklist' ? '📋' :
-                         inst.template?.task_type === 'bonus' ? '🎁' : '📌'}
-                      </span>
+                      <TaskVisual template={inst.template} size="lg" className="bg-purple-50 flex-shrink-0" />
                       <div>
                         <h4 className="font-bold text-lg">{inst.template?.name || 'Quest'}</h4>
                         <div className="flex gap-3 text-sm text-gray-500">

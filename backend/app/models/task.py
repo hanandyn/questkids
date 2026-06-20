@@ -51,6 +51,7 @@ class TaskTemplate(Base):
     
     # Tier 1 (Little Explorers) — pre-reader support
     icon = Column(String, nullable=True)  # emoji or icon name for pre-readers
+    image_url = Column(String, nullable=True)  # illustrated task image or uploaded family image
     audio_prompt = Column(String, nullable=True)  # TTS text for voice guidance
     
     # Other settings

@@ -48,3 +48,7 @@ async def _run_migrations(conn):
         await conn.execute(text(
             'ALTER TABLE task_templates ADD COLUMN assigned_kids JSON'
         ))
+    if 'image_url' not in existing:
+        await conn.execute(text(
+            'ALTER TABLE task_templates ADD COLUMN image_url VARCHAR'
+        ))

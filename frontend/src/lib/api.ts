@@ -39,6 +39,21 @@ export const api = {
   deleteTemplate: (id: number) => apiFetch(`/tasks/templates/${id}`, { method: 'DELETE' }),
   cleanOrphanedInstances: () => apiFetch('/tasks/instances/orphaned', { method: 'DELETE' }),
   updateTemplate: (id: number, data: JSONData) => apiFetch(`/tasks/templates/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  uploadTemplateImage: (templateId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(`/api/v1/tasks/templates/${templateId}/image`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    }).then(res => {
+      if (!res.ok) return res.json().then(e => { throw new Error(e.detail || 'Upload failed'); });
+      return res.json();
+    });
+  },
   getInstances: (childId?: number) => apiFetch(`/tasks/instances${childId ? `?child_id=${childId}` : ''}`),
   startTimer: (id: number) => apiFetch(`/tasks/instances/${id}/start-timer`, { method: 'POST' }),
   completeTask: (id: number, elapsedSeconds: number) => apiFetch(`/tasks/instances/${id}/complete`, {

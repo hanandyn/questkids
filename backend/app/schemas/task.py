@@ -30,6 +30,7 @@ class TaskTemplateCreate(BaseModel):
     requires_photo: bool = False
     requires_approval: bool = False
     icon: Optional[str] = None  # emoji or icon name for pre-readers
+    image_url: Optional[str] = None
     audio_prompt: Optional[str] = None  # TTS text for voice guidance
     assigned_child_ids: Optional[List[int]] = None  # kids assigned to this task
     public: bool = False  # share to marketplace
@@ -61,6 +62,7 @@ class TaskTemplateUpdate(BaseModel):
     requires_photo: Optional[bool] = None
     requires_approval: Optional[bool] = None
     icon: Optional[str] = None
+    image_url: Optional[str] = None
     audio_prompt: Optional[str] = None
     assigned_kids: Optional[List[int]] = None  # null = all kids, list = specific kids
 
@@ -105,6 +107,7 @@ class TaskTemplateResponse(BaseModel):
     requires_photo: bool
     requires_approval: bool
     icon: Optional[str] = None
+    image_url: Optional[str] = None
     audio_prompt: Optional[str] = None
     is_active: bool
     public: bool = False

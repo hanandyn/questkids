@@ -30,3 +30,21 @@ async def get_db() -> AsyncSession:
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Migrations: add columns to existing tables
+        await _run_migrations(conn)
+
+
+async def _run_migrations(conn):
+    """Add new columns to existing tables (SQLite-compatible)."""
+    from sqlalchemy import text, inspect
+
+    def _get_columns(sync_conn):
+        insp = inspect(sync_conn)
+        return {c['name'] for c in insp.get_columns('task_templates')}
+
+    existing = await conn.run_sync(_get_columns)
+
+    if 'assigned_kids' not in existing:
+        await conn.execute(text(
+            'ALTER TABLE task_templates ADD COLUMN assigned_kids JSON'
+        ))

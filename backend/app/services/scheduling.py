@@ -119,12 +119,18 @@ async def generate_instances_for_week(
 
     instances = []
     for template in templates:
+        # Determine which kids get this template
+        if template.assigned_kids is not None:
+            eligible_kids = [cid for cid in children_ids if cid in template.assigned_kids]
+        else:
+            eligible_kids = list(children_ids)
+
         for i in range(8):  # check today + 7 days
             check_date = _add_days(today, i)
             if check_date > end_date:
                 break
             if is_scheduled_today(template, check_date):
-                for child_id in children_ids:
+                for child_id in eligible_kids:
                     # Check if instance already exists
                     existing_result = await db.execute(
                         select(TaskInstance).where(

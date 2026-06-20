@@ -35,6 +35,36 @@ class TaskTemplateCreate(BaseModel):
     public: bool = False  # share to marketplace
 
 
+class TaskTemplateUpdate(BaseModel):
+    """Partial update for a task template."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    task_type: Optional[str] = None
+    base_points: Optional[int] = None
+    timer_duration: Optional[int] = None
+    pomodoro_cycles: Optional[int] = None
+    break_duration: Optional[int] = None
+    subtasks: Optional[list[dict]] = None
+    all_complete_bonus: Optional[int] = None
+    max_asks: Optional[int] = None
+    bonus_first_ask: Optional[int] = None
+    penalty_per_ask: Optional[int] = None
+    early_finish_bonus_per_min: Optional[int] = None
+    overstay_penalty_per_min: Optional[int] = None
+    schedule_type: Optional[str] = None
+    schedule_days: Optional[List[int]] = None
+    time_window_start: Optional[str] = None
+    time_window_end: Optional[str] = None
+    age_tier_min: Optional[int] = None
+    age_tier_max: Optional[int] = None
+    requires_photo: Optional[bool] = None
+    requires_approval: Optional[bool] = None
+    icon: Optional[str] = None
+    audio_prompt: Optional[str] = None
+    assigned_kids: Optional[List[int]] = None  # null = all kids, list = specific kids
+
+
 class TaskTemplateMarketplaceFilter(BaseModel):
     age_tier: Optional[int] = None
     category: Optional[str] = None
@@ -81,6 +111,7 @@ class TaskTemplateResponse(BaseModel):
     community_rating: int = 0
     community_ratings_count: int = 0
     created_at: Optional[datetime] = None
+    assigned_kids: Optional[list] = None  # list of child IDs, or null for all kids
 
     model_config = {"from_attributes": True}
 

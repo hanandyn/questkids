@@ -58,6 +58,9 @@ class TaskTemplate(Base):
     age_tier_max = Column(Integer, default=5)
     requires_photo = Column(Boolean, default=False)
     requires_approval = Column(Boolean, default=False)
+    
+    # Per-child assignment (null = all kids in family)
+    assigned_kids = Column(JSON, nullable=True)  # list of child user IDs, or None for all
     is_active = Column(Boolean, default=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())

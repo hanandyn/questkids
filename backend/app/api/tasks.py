@@ -16,7 +16,7 @@ from ..core.auth import get_current_user, get_current_parent
 from ..models.user import User
 from ..models.task import TaskTemplate, TaskInstance
 from ..schemas.task import (
-    TaskTemplateCreate, TaskTemplateResponse,
+    TaskTemplateCreate, TaskTemplateUpdate, TaskTemplateResponse,
     TaskInstanceResponse, TimerStartRequest, TimerCompleteRequest,
     TaskApproveRequest, PhotoUploadResponse, PendingApprovalResponse,
     TaskStatusUpdateRequest, AssignTemplateRequest, ManualTaskCreateRequest,
@@ -36,10 +36,13 @@ async def create_task_template(
     db: AsyncSession = Depends(get_db),
 ):
     """Parent creates a task template."""
+    # Store assigned_kids if provided (null = all kids)
+    assigned_kids = data.assigned_child_ids
     template = TaskTemplate(
         family_id=current_user.family_id,
         created_by_id=current_user.id,
         **data.model_dump(exclude={"assigned_child_ids"}),
+        assigned_kids=assigned_kids,
     )
     db.add(template)
     await db.commit()
@@ -109,7 +112,7 @@ async def delete_task_template(
     current_user: User = Depends(get_current_parent),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete (deactivate) a task template."""
+    """Delete (deactivate) a task template and remove pending instances."""
     result = await db.execute(
         select(TaskTemplate).where(
             and_(TaskTemplate.id == template_id, TaskTemplate.family_id == current_user.family_id)
@@ -119,8 +122,62 @@ async def delete_task_template(
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
     template.is_active = False
+
+    # Delete all pending instances for this template (they're no longer relevant)
+    pending_result = await db.execute(
+        select(TaskInstance).where(
+            TaskInstance.template_id == template_id,
+            TaskInstance.status == "pending",
+        )
+    )
+    pending_instances = pending_result.scalars().all()
+    for inst in pending_instances:
+        await db.delete(inst)
+
     await db.commit()
-    return {"message": "Template deleted"}
+    return {"message": "Template deleted", "instances_removed": len(pending_instances)}
+
+
+@router.patch("/templates/{template_id}", response_model=TaskTemplateResponse)
+async def update_task_template(
+    template_id: int,
+    data: TaskTemplateUpdate,
+    current_user: User = Depends(get_current_parent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Parent updates a task template."""
+    result = await db.execute(
+        select(TaskTemplate).where(
+            and_(TaskTemplate.id == template_id, TaskTemplate.family_id == current_user.family_id)
+        )
+    )
+    template = result.scalar_one_or_none()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+
+    update_data = data.model_dump(exclude_unset=True)
+
+    # If assigned_kids changed, clean up instances for removed kids
+    if "assigned_kids" in update_data:
+        new_kids = set(update_data["assigned_kids"] or [])
+        # Delete pending instances for kids no longer assigned
+        pending_result = await db.execute(
+            select(TaskInstance).where(
+                TaskInstance.template_id == template_id,
+                TaskInstance.status == "pending",
+            )
+        )
+        pending = pending_result.scalars().all()
+        for inst in pending:
+            if inst.child_id not in new_kids:
+                await db.delete(inst)
+
+    for field, value in update_data.items():
+        setattr(template, field, value)
+
+    await db.commit()
+    await db.refresh(template)
+    return TaskTemplateResponse.model_validate(template)
 
 
 @router.get("/instances", response_model=list[TaskInstanceResponse])

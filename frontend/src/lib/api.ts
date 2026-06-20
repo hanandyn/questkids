@@ -37,6 +37,7 @@ export const api = {
   createTemplate: (data: JSONData) => apiFetch('/tasks/templates', { method: 'POST', body: JSON.stringify(data) }),
   getTemplates: () => apiFetch('/tasks/templates'),
   deleteTemplate: (id: number) => apiFetch(`/tasks/templates/${id}`, { method: 'DELETE' }),
+  updateTemplate: (id: number, data: JSONData) => apiFetch(`/tasks/templates/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   getInstances: (childId?: number) => apiFetch(`/tasks/instances${childId ? `?child_id=${childId}` : ''}`),
   startTimer: (id: number) => apiFetch(`/tasks/instances/${id}/start-timer`, { method: 'POST' }),
   completeTask: (id: number, elapsedSeconds: number) => apiFetch(`/tasks/instances/${id}/complete`, {

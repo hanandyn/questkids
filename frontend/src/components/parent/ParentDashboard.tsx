@@ -31,6 +31,7 @@ export function ParentDashboard() {
   const [showAddChild, setShowAddChild] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddReward, setShowAddReward] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
 
   // Child form
   const [childName, setChildName] = useState('');
@@ -107,7 +108,7 @@ export function ParentDashboard() {
         penalty_per_ask: -Math.abs(penaltyPerAsk),
         overstay_penalty_per_min: Math.abs(5),
         schedule_type: scheduleType,
-        assigned_child_ids: taskAssignKids.length > 0 ? taskAssignKids : children.map(c => c.id),
+        assigned_child_ids: taskAssignKids.length > 0 ? taskAssignKids : null,
       });
       setShowAddTask(false);
       setMessage('Task template created! ✅');
@@ -133,8 +134,41 @@ export function ParentDashboard() {
   };
 
   const handleDeleteTemplate = async (id: number) => {
+    if (!confirm('Delete this task? Pending instances will be removed.')) return;
     await api.deleteTemplate(id);
+    setMessage('Task deleted ✅');
     loadData();
+  };
+
+  const handleEditTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTemplate) return;
+    try {
+      await api.updateTemplate(editingTemplate.id, {
+        name: taskName,
+        task_type: taskType,
+        base_points: basePoints,
+        timer_duration: taskType === 'timed' ? timerDuration : null,
+        max_asks: maxAsks,
+        schedule_type: scheduleType,
+        assigned_kids: taskAssignKids.length > 0 ? taskAssignKids : null,
+      });
+      setEditingTemplate(null);
+      setTaskName(''); setTaskAssignKids([]);
+      setMessage('Task updated! ✅');
+      loadData();
+    } catch (err: unknown) { setMessage(err instanceof Error ? err.message : 'Something went wrong'); }
+  };
+
+  const openEditTemplate = (tpl: TaskTemplate) => {
+    setEditingTemplate(tpl);
+    setTaskName(tpl.name);
+    setTaskType(tpl.task_type);
+    setBasePoints(tpl.base_points);
+    setTimerDuration(tpl.timer_duration || 600);
+    setMaxAsks(tpl.max_asks);
+    setScheduleType(tpl.schedule_type);
+    setTaskAssignKids((tpl as unknown as { assigned_kids?: number[] }).assigned_kids || []);
   };
 
   const handleDeleteReward = async (id: number) => {
@@ -275,7 +309,12 @@ export function ParentDashboard() {
               </div>
             </div>
             <div className="space-y-3">
-              {templates.map(tpl => (
+              {templates.map(tpl => {
+                const assignedKids = (tpl as unknown as { assigned_kids?: number[] }).assigned_kids;
+                const assignedNames = assignedKids
+                  ? children.filter(c => assignedKids.includes(c.id)).map(c => c.display_name)
+                  : [];
+                return (
                 <motion.div
                   key={tpl.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -284,21 +323,33 @@ export function ParentDashboard() {
                 >
                   <div>
                     <h3 className="font-bold text-lg">{tpl.name}</h3>
-                    <div className="text-sm text-gray-500 flex gap-3">
+                    <div className="text-sm text-gray-500 flex gap-3 flex-wrap">
                       <span>{tpl.task_type}</span>
                       <span>⭐ {tpl.base_points} pts</span>
                       <span>{tpl.schedule_type}</span>
                       {tpl.timer_duration && <span>⏱ {tpl.timer_duration}s</span>}
+                      {assignedNames.length > 0
+                        ? <span className="text-blue-500">👤 {assignedNames.join(', ')}</span>
+                        : <span className="text-gray-400">👤 All kids</span>}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDeleteTemplate(tpl.id)}
-                    className="text-red-400 hover:text-red-600 text-sm"
-                  >
-                    Remove
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEditTemplate(tpl)}
+                      className="text-blue-500 hover:text-blue-700 text-sm font-medium"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(tpl.id)}
+                      className="text-red-400 hover:text-red-600 text-sm font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </motion.div>
-              ))}
+                );
+              })}
               {templates.length === 0 && (
                 <div className="text-center py-12 text-gray-400">
                   <div className="text-5xl mb-4">📋</div>
@@ -363,6 +414,68 @@ export function ParentDashboard() {
                     <div className="flex gap-3">
                       <button type="submit" className="btn-primary flex-1">Create Task</button>
                       <button type="button" onClick={() => { setShowAddTask(false); setTaskAssignKids([]); }} className="btn-quest bg-gray-200">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Edit Task Modal */}
+            {editingTemplate && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
+                <div className="card-quest w-full max-w-lg m-4 max-h-[90vh] overflow-y-auto">
+                  <h3 className="text-xl font-bold mb-4">✏️ Edit Task Template</h3>
+                  <form onSubmit={handleEditTemplate} className="space-y-3">
+                    <input type="text" value={taskName} onChange={e => setTaskName(e.target.value)} placeholder="Task name" className="w-full px-4 py-3 rounded-xl border-2 border-gray-200" required />
+                    <div className="grid grid-cols-2 gap-3">
+                      <select value={taskType} onChange={e => setTaskType(e.target.value)} className="px-4 py-3 rounded-xl border-2 border-gray-200">
+                        <option value="one_shot">One Shot</option>
+                        <option value="timed">Timed</option>
+                        <option value="checklist">Checklist</option>
+                        <option value="bonus">Bonus</option>
+                      </select>
+                      <select value={scheduleType} onChange={e => setScheduleType(e.target.value)} className="px-4 py-3 rounded-xl border-2 border-gray-200">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="weekdays">Weekdays</option>
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-xs text-gray-500">Base Points</label>
+                        <input type="number" value={basePoints} onChange={e => setBasePoints(Number(e.target.value))} className="w-full px-3 py-2 rounded-xl border-2 border-gray-200" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Timer (sec)</label>
+                        <input type="number" value={timerDuration} onChange={e => setTimerDuration(Number(e.target.value))} className="w-full px-3 py-2 rounded-xl border-2 border-gray-200" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Max Asks</label>
+                        <input type="number" value={maxAsks} onChange={e => setMaxAsks(Number(e.target.value))} className="w-full px-3 py-2 rounded-xl border-2 border-gray-200" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Assign to (empty = all kids)</label>
+                      <div className="flex flex-wrap gap-2">
+                        {children.map(c => (
+                          <label key={c.id} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border-2 cursor-pointer text-sm transition-colors ${taskAssignKids.includes(c.id) ? 'border-quest-blue bg-blue-50 text-quest-blue' : 'border-gray-200 text-gray-500'}`}>
+                            <input
+                              type="checkbox"
+                              className="hidden"
+                              checked={taskAssignKids.includes(c.id)}
+                              onChange={e => {
+                                if (e.target.checked) setTaskAssignKids([...taskAssignKids, c.id]);
+                                else setTaskAssignKids(taskAssignKids.filter(id => id !== c.id));
+                              }}
+                            />
+                            {c.age_tier === 1 ? '🐣' : c.age_tier === 2 ? '🌟' : '🧑'} {c.display_name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button type="submit" className="btn-primary flex-1">Save Changes</button>
+                      <button type="button" onClick={() => { setEditingTemplate(null); setTaskAssignKids([]); }} className="btn-quest bg-gray-200">Cancel</button>
                     </div>
                   </form>
                 </div>

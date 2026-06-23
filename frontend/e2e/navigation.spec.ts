@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const apiBaseURL = process.env.E2E_API_URL || process.env.E2E_BASE_URL;
+
 /**
  * E2E tests for navigation and routing.
  */
@@ -30,7 +32,8 @@ test.describe('Navigation', () => {
   });
 
   test('should handle API health check', async ({ request }) => {
-    const response = await request.get(`${test.info().config.use.baseURL}/api/v1/health`);
+    test.skip(!apiBaseURL, 'Set E2E_API_URL to run backend API checks.');
+    const response = await request.get(`${apiBaseURL}/api/v1/health`);
     expect(response.status()).toBeLessThan(500);
     const body = await response.json();
     expect(body).toHaveProperty('status');

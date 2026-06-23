@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FunDo</string>
+    <string name="title_activity_main">FunDo</string>
+    <string name="package_name">com.dayan.fundo</string>
+    <string name="custom_url_scheme">com.dayan.fundo</string>
+</resources>

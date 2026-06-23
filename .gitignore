@@ -39,6 +39,8 @@ Thumbs.db
 coverage/
 htmlcov/
 .hypothesis/
+frontend/playwright-report/
+frontend/test-results/
 
 # Docker
 docker-compose.override.yml

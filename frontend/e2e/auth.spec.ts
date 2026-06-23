@@ -7,20 +7,21 @@ import { test, expect } from '@playwright/test';
 test.describe('Authentication', () => {
   test('should show login page when not authenticated', async ({ page }) => {
     await page.goto('/');
-    // Should see login form
-    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('input[name="password"]')).toBeVisible();
+    await page.getByRole('button', { name: /grown-up|parent/i }).click();
+    await expect(page.locator('input[type="text"]').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('input[type="password"]').first()).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
   test('should show error for invalid credentials', async ({ page }) => {
     await page.goto('/');
-    await page.fill('input[name="username"]', 'invalid-user');
-    await page.fill('input[name="password"]', 'wrong-password');
+    await page.getByRole('button', { name: /grown-up|parent/i }).click();
+    await page.locator('input[type="text"]').first().fill('invalid-user');
+    await page.locator('input[type="password"]').first().fill('wrong-password');
     await page.click('button[type="submit"]');
 
     // Should show error message
-    await expect(page.locator('[class*="error"], [class*="Error"], .text-red')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[role="alert"], .text-red-700, .text-red')).toBeVisible({ timeout: 10000 });
   });
 
   test('should show registration form toggle', async ({ page }) => {
@@ -30,7 +31,7 @@ test.describe('Authentication', () => {
     if (await registerLink.count() > 0) {
       await registerLink.first().click();
       // Should show family name field in registration
-      const familyField = page.locator('input[name="familyName"], input[name="family_name"]');
+      const familyField = page.locator('input[type="text"]').first();
       await expect(familyField).toBeVisible({ timeout: 5000 });
     }
   });

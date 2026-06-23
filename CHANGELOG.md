@@ -7,9 +7,12 @@ All notable changes to FunDo will be documented in this file.
 ### Added
 - IndexedDB-backed offline queue for JSON state changes, with reconnect sync and a pending-sync status indicator.
 - Browser push subscription support, service-worker push handling, and VAPID configuration placeholders.
+- Capacitor native Android/iOS project shells and mobile build scripts.
+- Responsive viewport regression coverage for phone, tablet, desktop, and wide layouts.
 
 ### Changed
 - Backend health/version metadata now uses the app release version and includes both FunDo and legacy QuestKids production origins.
+- Global layout styles now include safe-area support, media overflow guards, and small-screen sizing safeguards.
 
 ## [v1.0.1] - 2026-06-23 - Audio Stabilization
 

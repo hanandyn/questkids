@@ -104,6 +104,7 @@ FunDo turns everyday chores and tasks into an adventure game. Kids earn points, 
 - 🚦 Rate limiting via slowapi
 - 🔄 Request ID tracing
 - 📦 Code splitting & lazy loading (v0.9)
+- 📱 Native Android/iOS shells via Capacitor
 
 ## Tech Stack
 
@@ -140,6 +141,17 @@ npm run dev
 
 Open http://localhost:5173
 
+### Native Mobile
+
+```bash
+cd frontend
+npm run native:sync       # build web assets and sync Android/iOS shells
+npm run native:android    # open Android Studio
+npm run native:ios        # open Xcode on macOS
+```
+
+The native apps are Capacitor shells around the production React build in `frontend/dist`.
+
 ### Docker
 
 ```bash
@@ -166,6 +178,7 @@ cd frontend
 npx tsc --noEmit            # TypeScript check
 npx eslint src/ --max-warnings 0  # Lint
 npm run build               # Production build
+npm run test:e2e            # Responsive/browser smoke tests
 ```
 
 ## Project Structure

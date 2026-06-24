@@ -28,7 +28,7 @@ import emptyImg from '../../assets/fundo-empty.jpg';
 import { useCheers } from '../../lib/useCheers';
 import * as audio from '../../lib/audio';
 
-type ViewType = 'quests' | 'shop' | 'leaderboard' | 'achievements' | 'powerups' | 'settings';
+type ViewType = 'quests' | 'shop' | 'leaderboard' | 'achievements' | 'powerups' | 'settings' | 'family';
 
 interface TaskCompleteExtras {
   gems_earned?: number;
@@ -40,7 +40,7 @@ interface TaskCompleteExtras {
 
 export function KidQuestBoard() {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [instances, setInstances] = useState<TaskInstance[]>([]);
   const [, setRewards] = useState<Reward[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('quests');
@@ -78,6 +78,18 @@ export function KidQuestBoard() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Auto-refresh tasks every 10 seconds for real-time parent updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (user?.id) {
+        api.getInstances().then(data => {
+          setInstances(data as unknown as TaskInstance[]);
+        }).catch(() => {});
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   // Cheers
   const { receivedCheers } = useCheers();
@@ -267,34 +279,36 @@ export function KidQuestBoard() {
       {/* Confetti overlay */}
       <Confetti active={showConfetti} />
 
-      {/* Kid Header */}
-      <header className="bg-white/90 backdrop-blur shadow-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-3">
+      {/* Kid Header — fixed at top */}
+      <header className="bg-white/95 backdrop-blur shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-2">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold flex items-center gap-2 cursor-pointer"
+            <h1 className="text-lg font-bold flex items-center gap-1"
               onClick={() => { audio.playButtonClick(); setActiveView('quests'); }}
             >
-              🏰 FunDo <span className="text-xs text-gray-300 ml-1">v1.0.1</span>
+              🏰 <span className="hidden sm:inline">FunDo</span>
             </h1>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-1 text-sm">
               <NotificationBell />
-              <button onClick={handleSoundToggle} className="text-lg" title={muted ? 'Unmute' : 'Mute'}>
+              <button onClick={handleSoundToggle} className="text-lg p-1" title={muted ? 'Unmute' : 'Mute'}>
                 {muted ? '🔇' : '🔊'}
               </button>
-              <span className="bg-quest-gold/20 px-3 py-1 rounded-full font-bold">
+              <span className="bg-quest-gold/20 px-2 py-1 rounded-full font-bold text-xs">
                 ⭐ {user?.stars || 0}
               </span>
-              <span className="bg-quest-gem/20 px-3 py-1 rounded-full font-bold">
+              <span className="bg-quest-gem/20 px-2 py-1 rounded-full font-bold text-xs">
                 💎 {user?.gems || 0}
               </span>
-              <span className="bg-red-100 px-3 py-1 rounded-full font-bold">
+              <span className="bg-red-100 px-2 py-1 rounded-full font-bold text-xs">
                 🔥 {user?.current_streak || 0}
               </span>
-              <button onClick={logout} className="text-xs text-red-400 ml-2">🚪</button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Spacer for fixed header */}
+      <div className="h-14"></div>
 
       {/* Hero Section */}
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -388,6 +402,7 @@ export function KidQuestBoard() {
             ['powerups', '⚡ ' + t('nav.powerups')],
             ['leaderboard', '🏆 ' + t('nav.leaderboard')],
             ['achievements', '🏅 ' + t('nav.achievements')],
+            ['family', '💬 Family'],
             ['settings', '⚙️ ' + t('nav.settings')],
           ] as [ViewType, string][]).map(([view, label]) => (
             <button
@@ -403,6 +418,13 @@ export function KidQuestBoard() {
             </button>
           ))}
         </div>
+
+        {/* Family Board View */}
+        {activeView === 'family' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <FamilyMessageBoard />
+          </motion.div>
+        )}
 
         {/* Active Timer Overlay */}
         {activeTimer && (
@@ -613,7 +635,6 @@ export function KidQuestBoard() {
         {activeView === 'quests' && (
           <div className="mt-6">
             <KidDailyRecap />
-            <FamilyMessageBoard />
           </div>
         )}
       </div>

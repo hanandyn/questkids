@@ -303,7 +303,7 @@ export function ParentTaskManagement({ children }: { children: User[] }) {
                 <button type="submit" className="btn-primary flex-1" disabled={!assignTemplateId || assignChildIds.length === 0}>
                   {t('parent.assign', 'Assign')}
                 </button>
-                <button type="button" onClick={() => { setShowAssignModal(false); setAssignTemplateId(null); setAssignChildIds([]); }} className="btn-quest bg-gray-200">
+                <button type="button" onClick={() => { setShowAssignModal(false); setAssignTemplateId(null); setAssignChildIds([]); }} className="flex-1 py-3 rounded-xl font-bold bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200 hover:scale-[1.02] transition-transform">
                   {t('common.cancel', 'Cancel')}
                 </button>
               </div>

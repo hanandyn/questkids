@@ -46,7 +46,7 @@ export function ParentDashboard() {
   const [children, setChildren] = useState<User[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [activeTab, setActiveTab] = useState<'children' | 'tasks' | 'manage' | 'rewards' | 'goals' | 'recap' | 'insights' | 'organizations' | 'marketplace' | 'calendar' | 'teacher' | 'metrics' | 'analytics' | 'suggestions' | 'rituals' | 'approvals' | 'settings'>('children');
+  const [activeTab, setActiveTab] = useState<'children' | 'tasks' | 'manage' | 'rewards' | 'goals' | 'recap' | 'insights' | 'organizations' | 'marketplace' | 'calendar' | 'teacher' | 'metrics' | 'analytics' | 'suggestions' | 'rituals' | 'approvals' | 'settings' | 'family'>('children');
   const [showAddChild, setShowAddChild] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddReward, setShowAddReward] = useState(false);
@@ -299,7 +299,7 @@ export function ParentDashboard() {
         {/* Tab Navigation */}
         <div className="-mx-4 mb-6 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max gap-2">
-          {(['children', 'tasks', 'manage', 'rewards', 'goals', 'recap', 'insights', 'analytics', 'suggestions', 'rituals', 'marketplace', 'organizations', 'calendar', 'teacher', 'metrics', 'approvals', 'settings'] as const).map(tab => (
+          {(['children', 'tasks', 'manage', 'rewards', 'goals', 'recap', 'insights', 'analytics', 'suggestions', 'rituals', 'marketplace', 'organizations', 'calendar', 'teacher', 'metrics', 'approvals', 'settings', 'family'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -309,7 +309,7 @@ export function ParentDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
-              {tab === 'children' ? '👶 Children' : tab === 'manage' ? '⚖️ Manage' : tab === 'tasks' ? '📋 Tasks' : tab === 'rewards' ? '🎁 Rewards' : tab === 'goals' ? '🎯 Goals' : tab === 'recap' ? '📊 Recap' : tab === 'insights' ? '💡 Insights' : tab === 'analytics' ? '📊 Analytics' : tab === 'suggestions' ? '🧠 Tips' : tab === 'rituals' ? '🌅 Rituals' : tab === 'marketplace' ? '📋 Marketplace' : tab === 'organizations' ? '🏫 Orgs' : tab === 'calendar' ? '📅 Calendar' : tab === 'teacher' ? '👩‍🏫 Teacher' : tab === 'approvals' ? '📸 Approvals' : tab === 'settings' ? '⚙️ Settings' : '📈 Metrics'}
+              {tab === 'children' ? '👶 Children' : tab === 'manage' ? '⚖️ Manage' : tab === 'tasks' ? '📋 Tasks' : tab === 'rewards' ? '🎁 Rewards' : tab === 'goals' ? '🎯 Goals' : tab === 'recap' ? '📊 Recap' : tab === 'insights' ? '💡 Insights' : tab === 'analytics' ? '📊 Analytics' : tab === 'suggestions' ? '🧠 Tips' : tab === 'rituals' ? '🌅 Rituals' : tab === 'marketplace' ? '📋 Marketplace' : tab === 'organizations' ? '🏫 Orgs' : tab === 'calendar' ? '📅 Calendar' : tab === 'teacher' ? '👩‍🏫 Teacher' : tab === 'approvals' ? '📸 Approvals' : tab === 'settings' ? '⚙️ Settings' : tab === 'family' ? '💬 Family' : '📈 Metrics'}
             </button>
           ))}
           </div>
@@ -474,7 +474,7 @@ export function ParentDashboard() {
                     </select>
                     <div className="flex gap-3">
                       <button type="submit" className="btn-primary flex-1">Create</button>
-                      <button type="button" onClick={() => setShowAddChild(false)} className="btn-quest bg-gray-200 flex-1">Cancel</button>
+                      <button type="button" onClick={() => setShowAddChild(false)} className="flex-1 py-3 rounded-xl font-bold bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200 hover:scale-[1.02] transition-transform">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -648,8 +648,8 @@ export function ParentDashboard() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <button type="submit" className="btn-primary flex-1">Create Task</button>
-                      <button type="button" onClick={() => { setShowAddTask(false); setTaskAssignKids([]); setTaskIcon(''); setTaskImageUrl(''); handleTaskImageFile(null); }} className="btn-quest bg-gray-200">Cancel</button>
+                      <button type="submit" className="btn-primary flex-1 py-3 rounded-xl font-bold text-white shadow-lg hover:scale-[1.02] transition-transform">Create Task</button>
+                      <button type="button" onClick={() => { setShowAddTask(false); setTaskAssignKids([]); setTaskIcon(''); setTaskImageUrl(''); handleTaskImageFile(null); }} className="flex-1 py-3 rounded-xl font-bold bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200 hover:scale-[1.02] transition-transform">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -751,7 +751,7 @@ export function ParentDashboard() {
                     </div>
                     <div className="flex gap-3">
                       <button type="submit" className="btn-primary flex-1">Save Changes</button>
-                      <button type="button" onClick={() => { setEditingTemplate(null); setTaskAssignKids([]); setTaskIcon(''); setTaskImageUrl(''); handleTaskImageFile(null); }} className="btn-quest bg-gray-200">Cancel</button>
+                      <button type="button" onClick={() => { setEditingTemplate(null); setTaskAssignKids([]); setTaskIcon(''); setTaskImageUrl(''); handleTaskImageFile(null); }} className="flex-1 py-3 rounded-xl font-bold bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200 hover:scale-[1.02] transition-transform">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -830,7 +830,7 @@ export function ParentDashboard() {
                     </label>
                     <div className="flex gap-3">
                       <button type="submit" className="btn-primary flex-1">Add Reward</button>
-                      <button type="button" onClick={() => setShowAddReward(false)} className="btn-quest bg-gray-200">Cancel</button>
+                      <button type="button" onClick={() => setShowAddReward(false)} className="flex-1 py-3 rounded-xl font-bold bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200 hover:scale-[1.02] transition-transform">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -905,6 +905,8 @@ export function ParentDashboard() {
 
         {/* Phase 6: Metrics */}
         {activeTab === 'metrics' && <AdminMetricsPanel />}
+
+{activeTab === 'family' && <FamilyMessageBoard />}
 
         {/* Photo Approval Queue */}
         {activeTab === 'approvals' && <PhotoApprovalQueue />}

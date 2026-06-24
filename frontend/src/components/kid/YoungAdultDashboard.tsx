@@ -62,6 +62,16 @@ export function YoungAdultDashboard() {
     loadData();
   }, [loadData]);
 
+  // Auto-refresh tasks every 15 seconds for real-time parent updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      api.getInstances().then(data => {
+        setInstances(data as unknown as TaskInstance[]);
+      }).catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleRefresh = useCallback(async () => {
     setPullRefreshing(true);
     await loadData();
@@ -152,22 +162,22 @@ export function YoungAdultDashboard() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
       {/* Minimalist header */}
-      <header className="border-b border-slate-800/60 sticky top-0 z-20 bg-slate-950/90 backdrop-blur-xl">
-        <div className="max-w-4xl mx-auto px-5 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-sm font-bold text-slate-300">
+      <header className="border-b border-slate-800/60 fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl">
+        <div className="max-w-4xl mx-auto px-5 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-sm font-bold text-slate-300">
               {user?.display_name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div>
-              <h1 className="text-base font-semibold text-slate-100 leading-tight">{user?.display_name}</h1>
-              <p className="text-[11px] text-slate-500">{todayDate}</p>
+              <h1 className="text-sm font-semibold text-slate-100 leading-tight">{user?.display_name}</h1>
+              <p className="text-[10px] text-slate-500">{todayDate}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs">
               <span className="text-slate-400">{user?.stars ?? 0}<span className="text-slate-600 ml-0.5">⭐</span></span>
               <span className="text-slate-400">{user?.gems ?? 0}<span className="text-slate-600 ml-0.5">💎</span></span>
-              <span className="text-slate-500 text-xs">Lv.{user?.level}</span>
+              <span className="text-slate-500">Lv.{user?.level}</span>
             </div>
             <button onClick={logout} className="text-slate-600 hover:text-slate-400 transition-colors text-sm" title="Sign out">
               ⏻
@@ -176,7 +186,9 @@ export function YoungAdultDashboard() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-5 py-6">
+      <div className="h-14"></div>
+
+      <main className="max-w-4xl mx-auto px-5 py-4">
         {/* Toast */}
         <AnimatePresence>
           {toast && (

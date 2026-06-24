@@ -43,6 +43,16 @@ export function TeenDashboard() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Auto-refresh tasks every 15 seconds for real-time parent updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      api.getInstances().then(data => {
+        setInstances(data as unknown as TaskInstance[]);
+      }).catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleRefresh = useCallback(async () => {
     setPullRefreshing(true);
     await loadData();
@@ -113,8 +123,8 @@ export function TeenDashboard() {
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       {/* Dark Header with glass effect */}
-      <header className="bg-gray-900/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="bg-gray-900/95 backdrop-blur-md border-b border-gray-800 fixed top-0 left-0 right-0 z-50">
+        <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
@@ -147,6 +157,7 @@ export function TeenDashboard() {
         </div>
       </header>
 
+      <div className="h-12"></div>
       <div className="max-w-5xl mx-auto px-4 py-4">
         {/* Pull-to-refresh indicator */}
         {pullRefreshing && (

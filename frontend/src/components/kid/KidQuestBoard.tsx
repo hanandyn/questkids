@@ -287,7 +287,8 @@ export function KidQuestBoard() {
             <h1 className="text-lg font-bold flex items-center gap-1"
               onClick={() => { audio.playButtonClick(); setActiveView('quests'); }}
             >
-              🏰 <span className="hidden sm:inline">FunDo</span>
+              <img src="/logo.png" alt="FunDo" className="h-8 w-8 rounded-lg object-contain" />
+            <span className="hidden sm:inline">{t("app.name", "FunDo")}</span>
             </h1>
             <div className="flex min-w-0 items-center gap-1 text-sm">
               <NotificationBell />

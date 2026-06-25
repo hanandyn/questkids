@@ -4,7 +4,7 @@ import { EmptyState } from './EmptyState';
 export const EmptyStates = {
   noTasks: (action?: () => void) => (
     <EmptyState
-      icon="🏰"
+      icon="🦊"
       title="No tasks yet!"
       description="Your quest board is empty. Ask a parent to create some tasks for you."
       action={action ? { label: 'Go to Dashboard', onClick: action } : undefined}

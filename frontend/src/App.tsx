@@ -45,7 +45,7 @@ const PhotoApprovalQueuePage = lazy(() => import('./lazy/PhotoApprovalQueue'));
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-quest-bg">
     <div className="text-center">
-      <div className="text-7xl animate-bounce">🏰</div>
+      <img src="/logo.png" alt="FunDo" className="h-24 w-24 animate-bounce rounded-2xl" />
       <p className="text-xl text-gray-500 mt-4">Loading...</p>
     </div>
   </div>
@@ -124,7 +124,7 @@ function AppContent() {
     return (
       <main id="main-content" className="min-h-screen flex items-center justify-center bg-quest-bg">
         <div className="text-center">
-          <div className="text-7xl animate-bounce">🏰</div>
+          <img src="/logo.png" alt="FunDo" className="h-24 w-24 animate-bounce rounded-2xl" />
           <p className="text-xl text-gray-500 mt-4">{t('app.loading')}</p>
         </div>
       </main>

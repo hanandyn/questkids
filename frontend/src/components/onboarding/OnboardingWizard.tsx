@@ -17,7 +17,7 @@ function WelcomeStep({ onNext, data }: StepProps) {
 
   return (
     <div className="text-center">
-      <div className="text-8xl mb-6">🏰</div>
+      <img src="/logo.png" alt="FunDo" className="h-24 w-24 mb-6 rounded-2xl" />
       <h1 className="text-3xl font-bold text-quest-dark mb-4">
         {t('onboarding.welcome', 'Welcome to FunDo!')}
       </h1>

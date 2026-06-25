@@ -272,7 +272,8 @@ export function ParentDashboard() {
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <h1 className="min-w-0 text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <span className="truncate">🏰 FunDo</span>
+            <img src="/logo.png" alt="FunDo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-contain" />
+            <span className="truncate">FunDo</span>
             <span className="text-sm text-gray-400">| Parent</span>
             <span className="text-xs text-gray-300">v1.0.1</span>
           </h1>

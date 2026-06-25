@@ -194,7 +194,10 @@ export function LoginPage() {
           </button>
 
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2">🏰 {t('app.name', 'FunDo')}</h1>
+            <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
+              <img src="/logo.png" alt="FunDo" className="h-12 w-12 rounded-xl object-contain" />
+              {t('app.name', 'FunDo')}
+            </h1>
             <p className="text-gray-500 text-lg">
               {t('auth.whoAreYou', 'Who are you?')}
             </p>
@@ -365,7 +368,10 @@ export function LoginPage() {
         </button>
 
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">🏰 {t('app.name', 'FunDo')}</h1>
+          <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
+              <img src="/logo.png" alt="FunDo" className="h-12 w-12 rounded-xl object-contain" />
+              {t('app.name', 'FunDo')}
+            </h1>
           <p className="text-gray-500 text-lg">
             {isRegister ? t('auth.createAccount') : t('auth.welcomeBack')}
           </p>

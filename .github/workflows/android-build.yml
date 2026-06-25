@@ -39,22 +39,45 @@ jobs:
         run: npm run native:sync
 
       - name: Decode release keystore
+        id: keystore
         working-directory: frontend/android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.FUNDO_RELEASE_KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.FUNDO_RELEASE_KEYSTORE_BASE64 }}" | base64 -d > fundo-release.keystore
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > fundo-release.keystore
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build release APK
+        if: steps.keystore.outputs.present == 'true'
         working-directory: frontend/android
         env:
           FUND_RELEASE_STORE_FILE: ${{ github.workspace }}/frontend/android/fundo-release.keystore
-          FUND_RELEASE_STORE_PASSWORD: ${{ secrets.FUNDO_RELEASE_STORE_PASSWORD }}
+          FUND_RELEASE_STORE_PASSWORD: *** secrets.FUNDO_RELEASE_STORE_PASSWORD }}
           FUND_RELEASE_KEY_ALIAS: ${{ secrets.FUNDO_RELEASE_KEY_ALIAS }}
-          FUND_RELEASE_KEY_PASSWORD: ${{ secrets.FUNDO_RELEASE_KEY_PASSWORD }}
+          FUND_RELEASE_KEY_PASSWORD: *** secrets.FUNDO_RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
-      - name: Upload APK
+      - name: Build debug APK
+        if: steps.keystore.outputs.present != 'true'
+        working-directory: frontend/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload release APK
+        if: steps.keystore.outputs.present == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: fundo-android-release
           path: frontend/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      - name: Upload debug APK
+        if: steps.keystore.outputs.present != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fundo-android-debug
+          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
